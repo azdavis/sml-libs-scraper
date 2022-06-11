@@ -57,15 +57,9 @@ interface InfoMap {
   [k: string]: Info;
 }
 
-const MAX = 123123;
 function processFiles(files: File[]): InfoMap {
-  let i = 0;
   const map: InfoMap = {};
   for (const file of files) {
-    if (i >= MAX) {
-      break;
-    }
-    i++;
     const info = getInfo(file.name, load(file.text));
     const name = file.name.replace(/\.html$/, "");
     assert(!(name in map));
