@@ -111,9 +111,9 @@ function breakSmlAcrossLines(text: string): string[] {
     // hack to not split on 'where type' or 'and type' or 'sharing type'
     if (
       decStart.has(token) &&
-      (prev === null ||
-        (prev !== "where" && prev !== "and" && prev !== "sharing") ||
-        token !== "type")
+      (token !== "type" ||
+        prev === null ||
+        (prev !== "where" && prev !== "and" && prev !== "sharing"))
     ) {
       if (cur.length !== 0) {
         ret.push(cur.join(" "));
