@@ -53,17 +53,23 @@ interface File {
   text: string;
 }
 
-interface InfoMap {
-  [k: string]: Info;
+interface MergedInfoMap {
+  [k: string]: MergedInfo;
 }
 
-function processFiles(files: File[]): InfoMap {
-  const map: InfoMap = {};
+function processFiles(files: File[]): MergedInfoMap {
+  const map: MergedInfoMap = {};
   for (const file of files) {
-    const info = getInfo(file.name, load(file.text));
     const name = file.name.replace(/\.html$/, "");
     assert(!(name in map));
-    map[name] = info;
+    const info = getInfo(file.name, load(file.text));
+    const merged = mergeDecsAndDefs(info.sigDecs, info.defs);
+    map[name] = {
+      synopsis: info.synopsis,
+      desc: info.desc,
+      defs: merged.defs,
+      unused: merged.unused,
+    };
   }
   return map;
 }
@@ -173,6 +179,68 @@ function getInfo(name: string, $: CheerioAPI): Info {
     sigDecs,
     defs,
   };
+}
+
+interface MergedInfo {
+  synopsis: string | null;
+  desc: string[];
+  defs: Def[];
+  unused: { [k: string]: string };
+}
+
+interface Def {
+  dec: string;
+  prose: string | null;
+}
+
+function getName(s: string): string {
+  const name = s.split(" ").find((x) => !decStart.has(x) && !x.startsWith("'"));
+  if (name === undefined) {
+    throw new Error(`couldn't get name for: ${s}`);
+  }
+  return name;
+}
+
+interface Merged {
+  defs: Def[];
+  unused: { [k: string]: string };
+}
+
+function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
+  const map = new Map<string, string>();
+  const used = new Set<string>();
+  for (const def of multiDefs) {
+    assert(def.items.length !== 0);
+    let desc: string;
+    if (def.items.length === 1) {
+      const item = def.items[0];
+      if (decStart.has(item.split(" ")[0])) {
+        desc = def.desc;
+      } else {
+        desc = def.items[0] + " " + def.desc;
+      }
+    } else {
+      const joined = def.items.join(", ");
+      desc = `(This is shared documentation for: ${joined}.) ${def.desc}`;
+    }
+    for (const item of def.items) {
+      const name = getName(item);
+      map.set(name, desc);
+    }
+  }
+  const defs = sigDecs.map((dec) => {
+    const name = getName(dec);
+    const val = map.get(name);
+    used.add(name);
+    return { dec, prose: val === undefined ? null : val };
+  });
+  const unused: { [k: string]: string } = {};
+  for (const [k, v] of map.entries()) {
+    if (!used.has(k)) {
+      unused[k] = v;
+    }
+  }
+  return { defs, unused };
 }
 
 async function getFilesFromDir(): Promise<File[]> {
