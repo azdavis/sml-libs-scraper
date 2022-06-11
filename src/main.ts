@@ -87,8 +87,8 @@ interface Info {
 }
 
 function getCleanText(x: Cheerio<Element>): string {
-  // u00A0 is non-breaking space
-  return x.text().trim().replaceAll("\u00A0", " ").replaceAll(/\s+/g, " ");
+  // \s includes regular space, non-breaking space, newline, and others
+  return x.text().trim().replaceAll(/\s+/g, " ");
 }
 
 function getInfo(name: string, $: CheerioAPI): Info {
