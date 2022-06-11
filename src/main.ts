@@ -108,11 +108,11 @@ function breakSmlAcrossLines(text: string): string[] {
   let cur: string[] = [];
   let prev: string | null = null;
   for (const token of tokens) {
-    // hack to not split on 'where type' or 'and type'
+    // hack to not split on 'where type' or 'and type' or 'sharing type'
     if (
       decStart.has(token) &&
       (prev === null ||
-        (prev !== "where" && prev !== "and") ||
+        (prev !== "where" && prev !== "and" && prev !== "sharing") ||
         token !== "type")
     ) {
       if (cur.length !== 0) {
