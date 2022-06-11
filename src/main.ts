@@ -91,7 +91,42 @@ function getCleanText(x: Cheerio<Element>): string {
   return x.text().trim().replaceAll(/\s+/g, " ");
 }
 
-const decStart = new Set(["type", "eqtype", "datatype", "exception", "val"]);
+const decStart = new Set([
+  "type",
+  "eqtype",
+  "datatype",
+  "exception",
+  "val",
+  "structure",
+  "signature",
+  "functor",
+]);
+
+function breakSmlAcrossLines(text: string): string[] {
+  const ret: string[] = [];
+  const tokens = text.split(" ");
+  let cur: string[] = [];
+  let prev: string | null = null;
+  for (const token of tokens) {
+    // hack to not split on 'where type' or 'and type'
+    if (
+      decStart.has(token) &&
+      (prev === null ||
+        (prev !== "where" && prev !== "and") ||
+        token !== "type")
+    ) {
+      if (cur.length !== 0) {
+        ret.push(cur.join(" "));
+      }
+      cur = [token];
+    } else {
+      cur.push(token);
+    }
+    prev = token;
+  }
+  ret.push(cur.join(" "));
+  return ret;
+}
 
 function getInfo(name: string, $: CheerioAPI): Info {
   const headers = $("h4").toArray();
@@ -119,33 +154,13 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const interfaceHeader = headers.find(
     (x) => getCleanText($(x)) == "Interface",
   );
-  const sigDecs: string[] = [];
+  let sigDecs: string[] = [];
   if (interfaceHeader === undefined) {
     console.error(`${name}: missing interface`);
   } else {
     const elem = $(interfaceHeader).next();
     assert(elem.length === 1 && elem.is("blockquote"));
-    const tokens = getCleanText(elem).split(" ");
-    let cur: string[] = [];
-    let prev: string | null = null;
-    for (const token of tokens) {
-      // hack to not split on 'where type' or 'and type'
-      if (
-        decStart.has(token) &&
-        (prev === null ||
-          (prev !== "where" && prev !== "and") ||
-          token !== "type")
-      ) {
-        if (cur.length !== 0) {
-          sigDecs.push(cur.join(" "));
-        }
-        cur = [token];
-      } else {
-        cur.push(token);
-      }
-      prev = token;
-    }
-    sigDecs.push(cur.join(" "));
+    sigDecs = breakSmlAcrossLines(getCleanText(elem));
   }
   const descriptionHeader = headers.find(
     (x) => getCleanText($(x)) == "Description",
