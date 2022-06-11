@@ -76,7 +76,7 @@ interface MultiDef {
 interface Info {
   synopsis: string | null;
   desc: string[];
-  sigDecs: string[] | null;
+  sigDecs: string[];
   defs: MultiDef[];
 }
 
@@ -113,7 +113,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const interfaceHeader = headers.find(
     (x) => getCleanText($(x)) == "Interface",
   );
-  let sigDecs: string[] | null = null;
+  const sigDecs: string[] = [];
   if (interfaceHeader === undefined) {
     console.error(`${name}: missing interface`);
   } else {
@@ -121,7 +121,6 @@ function getInfo(name: string, $: CheerioAPI): Info {
     assert(elem.length === 1 && elem.is("blockquote"));
     const tokens = getCleanText(elem).split(" ");
     let cur: string[] = [];
-    const overall: string[] = [];
     let prev: string | null = null;
     for (const token of tokens) {
       // hack to not split on 'where type' or 'and type'
@@ -132,7 +131,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
           token !== "type")
       ) {
         if (cur.length !== 0) {
-          overall.push(cur.join(" "));
+          sigDecs.push(cur.join(" "));
         }
         cur = [token];
       } else {
@@ -140,8 +139,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
       }
       prev = token;
     }
-    overall.push(cur.join(" "));
-    sigDecs = overall;
+    sigDecs.push(cur.join(" "));
   }
   const descriptionHeader = headers.find(
     (x) => getCleanText($(x)) == "Description",
