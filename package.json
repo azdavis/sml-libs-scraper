@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "name": "sml-basis",
+  "version": "0.1.0",
+  "main": "out/main.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^4.7.3"
+  }
+}
