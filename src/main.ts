@@ -82,7 +82,7 @@ interface Def {
 interface Info {
   synopsis: string | null;
   synopsisDesc: string[];
-  interfaceDesc: string | null;
+  interfaceDesc: string[] | null;
   descriptionDefs: Def[];
 }
 
@@ -90,6 +90,8 @@ function getCleanText(x: Cheerio<Element>): string {
   // \s includes regular space, non-breaking space, newline, and others
   return x.text().trim().replaceAll(/\s+/g, " ");
 }
+
+const decStart = new Set(["type", "eqtype", "datatype", "exception", "val"]);
 
 function getInfo(name: string, $: CheerioAPI): Info {
   const headers = $("h4").toArray();
@@ -117,13 +119,35 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const interfaceHeader = headers.find(
     (x) => getCleanText($(x)) == "Interface",
   );
-  let interfaceDesc: string | null = null;
+  let interfaceDesc: string[] | null = null;
   if (interfaceHeader === undefined) {
     console.error(`${name}: missing interface`);
   } else {
     const elem = $(interfaceHeader).next();
     assert(elem.length === 1 && elem.is("blockquote"));
-    interfaceDesc = getCleanText(elem);
+    const tokens = getCleanText(elem).split(" ");
+    let cur: string[] = [];
+    const overall: string[] = [];
+    let prev: string | null = null;
+    for (const token of tokens) {
+      // hack to not split on 'where type' or 'and type'
+      if (
+        decStart.has(token) &&
+        (prev === null ||
+          (prev !== "where" && prev !== "and") ||
+          token !== "type")
+      ) {
+        if (cur.length !== 0) {
+          overall.push(cur.join(" "));
+        }
+        cur = [token];
+      } else {
+        cur.push(token);
+      }
+      prev = token;
+    }
+    overall.push(cur.join(" "));
+    interfaceDesc = overall;
   }
   const descriptionHeader = headers.find(
     (x) => getCleanText($(x)) == "Description",
