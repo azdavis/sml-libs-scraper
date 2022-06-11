@@ -81,9 +81,9 @@ interface Def {
 
 interface Info {
   synopsis: string | null;
-  synopsisDesc: string[];
-  interfaceDesc: string[] | null;
-  descriptionDefs: Def[];
+  desc: string[];
+  sigDecs: string[] | null;
+  prose: Def[];
 }
 
 function getCleanText(x: Cheerio<Element>): string {
@@ -96,7 +96,7 @@ const decStart = new Set(["type", "eqtype", "datatype", "exception", "val"]);
 function getInfo(name: string, $: CheerioAPI): Info {
   const headers = $("h4").toArray();
   const synopsisHeader = headers.find((x) => getCleanText($(x)) == "Synopsis");
-  const synopsisDesc: string[] = [];
+  const desc: string[] = [];
   let synopsis: string | null = null;
   if (synopsisHeader === undefined) {
     console.error(`${name}: missing synopsis`);
@@ -108,7 +108,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
       cur = cur.next();
       assert(cur.length === 1);
       if (cur.is("p")) {
-        synopsisDesc.push(getCleanText(cur));
+        desc.push(getCleanText(cur));
       } else if (cur.is("hr")) {
         break;
       } else {
@@ -119,7 +119,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const interfaceHeader = headers.find(
     (x) => getCleanText($(x)) == "Interface",
   );
-  let interfaceDesc: string[] | null = null;
+  let sigDecs: string[] | null = null;
   if (interfaceHeader === undefined) {
     console.error(`${name}: missing interface`);
   } else {
@@ -147,12 +147,12 @@ function getInfo(name: string, $: CheerioAPI): Info {
       prev = token;
     }
     overall.push(cur.join(" "));
-    interfaceDesc = overall;
+    sigDecs = overall;
   }
   const descriptionHeader = headers.find(
     (x) => getCleanText($(x)) == "Description",
   );
-  const descriptionDefs: Def[] = [];
+  const prose: Def[] = [];
   if (descriptionHeader === undefined) {
     console.error(`${name}: missing description`);
   } else {
@@ -167,7 +167,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
           items.push(t);
         }
       } else if (child.is("dd")) {
-        descriptionDefs.push({ items, desc: getCleanText(child) });
+        prose.push({ items, desc: getCleanText(child) });
         items = [];
       } else {
         console.warn(`${name}: non-dt non-dd child in description, ignoring`);
@@ -177,9 +177,9 @@ function getInfo(name: string, $: CheerioAPI): Info {
   }
   return {
     synopsis,
-    synopsisDesc,
-    interfaceDesc,
-    descriptionDefs,
+    desc,
+    sigDecs,
+    prose,
   };
 }
 
