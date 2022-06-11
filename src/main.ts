@@ -3,9 +3,9 @@ import { readdir, readFile, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
 
-const root = "https://smlfamily.github.io/Basis";
+const rootUrl = "https://smlfamily.github.io/Basis";
 
-const DIR = "html";
+const outDir = "html";
 
 function assert(x: boolean) {
   if (!x) {
@@ -29,7 +29,7 @@ function id<T>(x: T): T {
 }
 
 async function fetchAndWriteFiles(): Promise<File[]> {
-  const resp = await fetch(`${root}/manpages.html`);
+  const resp = await fetch(`${rootUrl}/manpages.html`);
   const text = await resp.text();
   const body = load(text);
   const urls = filterMap(
@@ -40,9 +40,9 @@ async function fetchAndWriteFiles(): Promise<File[]> {
   );
   return Promise.all(
     urls.map(async (name) => {
-      const resp = await fetch(`${root}/${name}`);
+      const resp = await fetch(`${rootUrl}/${name}`);
       const text = await resp.text();
-      await writeFile(path.join(DIR, name), text);
+      await writeFile(path.join(outDir, name), text);
       return { name, text };
     }),
   );
@@ -159,10 +159,10 @@ function getInfo(name: string, $: CheerioAPI): Info {
 }
 
 async function getFilesFromDir(): Promise<File[]> {
-  const fileNames = await readdir(DIR);
+  const fileNames = await readdir(outDir);
   return Promise.all(
     fileNames.map((name) =>
-      readFile(path.join(DIR, name)).then((text) => ({
+      readFile(path.join(outDir, name)).then((text) => ({
         name,
         text: text.toString(),
       })),
