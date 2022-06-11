@@ -134,7 +134,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const desc: string[] = [];
   let synopsis: string | null = null;
   if (synopsisHeader === undefined) {
-    console.error(`${name}: missing synopsis`);
+    console.warn(`${name}: missing synopsis`);
   } else {
     let cur = $(synopsisHeader).next();
     assert(cur.length === 1 && cur.is("blockquote"));
@@ -156,7 +156,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   );
   let sigDecs: string[] = [];
   if (interfaceHeader === undefined) {
-    console.error(`${name}: missing interface`);
+    console.warn(`${name}: missing interface`);
   } else {
     const elem = $(interfaceHeader).next();
     assert(elem.length === 1 && elem.is("blockquote"));
@@ -167,7 +167,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   );
   const defs: MultiDef[] = [];
   if (descriptionHeader === undefined) {
-    console.error(`${name}: missing description`);
+    console.warn(`${name}: missing description`);
   } else {
     const descriptionDl = $(descriptionHeader).next();
     assert(descriptionDl.length === 1 && descriptionDl.is("dl"));
