@@ -1,4 +1,7 @@
 {
   "version": "0.2",
-  "words": ["manpages"]
+  "words": [
+    "eqtype",
+    "manpages"
+  ]
 }
