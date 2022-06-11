@@ -87,6 +87,7 @@ interface Info {
 }
 
 function getCleanText(x: Cheerio<Element>): string {
+  // u00A0 is non-breaking space
   return x.text().trim().replaceAll("\u00A0", " ").replaceAll(/\s+/g, " ");
 }
 
