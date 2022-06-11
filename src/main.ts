@@ -68,7 +68,7 @@ function processFiles(files: File[]): InfoMap {
   return map;
 }
 
-interface Def {
+interface MultiDef {
   items: string[];
   desc: string;
 }
@@ -77,7 +77,7 @@ interface Info {
   synopsis: string | null;
   desc: string[];
   sigDecs: string[] | null;
-  prose: Def[];
+  defs: MultiDef[];
 }
 
 function getCleanText(x: Cheerio<Element>): string {
@@ -146,7 +146,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const descriptionHeader = headers.find(
     (x) => getCleanText($(x)) == "Description",
   );
-  const prose: Def[] = [];
+  const defs: MultiDef[] = [];
   if (descriptionHeader === undefined) {
     console.error(`${name}: missing description`);
   } else {
@@ -161,7 +161,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
           items.push(t);
         }
       } else if (child.is("dd")) {
-        prose.push({ items, desc: getCleanText(child) });
+        defs.push({ items, desc: getCleanText(child) });
         items = [];
       } else {
         console.warn(`${name}: non-dt non-dd child in description, ignoring`);
@@ -173,7 +173,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
     synopsis,
     desc,
     sigDecs,
-    prose,
+    defs,
   };
 }
 
