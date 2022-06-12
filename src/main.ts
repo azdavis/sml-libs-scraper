@@ -310,9 +310,9 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
 }
 
 const INDENT = "  ";
-function mkSmlFile(name: string, infos: MergedInfo[]): string {
+function mkSmlFile(infos: [string, MergedInfo][]): string {
   let lines: string[] = [];
-  for (const info of infos) {
+  for (const [name, info] of infos) {
     writeComment(lines, "", info.desc);
     if (info.signatureName === null) {
       if (info.defs.length !== 0) {
@@ -343,10 +343,10 @@ async function main() {
   const files = await getFilesFromDir();
   const map = processFiles(files);
   const out: MergedInfo[] = [];
-  for (const key of order) {
-    const val = map.get(key);
+  for (const name of order) {
+    const val = map.get(name);
     if (val === undefined) {
-      throw new Error(`key in order but not map: ${key}`);
+      throw new Error(`name in order but not map: ${name}`);
     }
     out.push(val);
   }
