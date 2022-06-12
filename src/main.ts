@@ -279,6 +279,61 @@ async function getFilesFromDir(): Promise<File[]> {
   );
 }
 
+const MAX_LINE_WIDTH = 80;
+// mutates lines to add the comment indented with indent.
+function writeComment(lines: string[], indent: string, paragraphs: string[]) {
+  lines.push(indent + "(*!");
+  for (let i = 0; i < paragraphs.length; i++) {
+    let cur = indent;
+    const paragraph = paragraphs[i];
+    for (const word of paragraph.split(" ")) {
+      const toAdd = (cur === indent ? "" : " ") + word;
+      if (cur.length + toAdd.length > MAX_LINE_WIDTH) {
+        lines.push(cur);
+        cur = indent + word;
+      } else {
+        cur += toAdd;
+      }
+    }
+    lines.push(cur);
+    if (i + 1 !== paragraphs.length) {
+      lines.push("");
+    }
+  }
+  lines.push(indent + "!*)");
+}
+
+const INDENT = "  ";
+function mkSmlFile(name: string, infos: MergedInfo[]): string {
+  let lines: string[] = [];
+  for (const info of infos) {
+    writeComment(lines, "", info.desc);
+    if (info.signatureName === null) {
+      if (info.defs.length !== 0) {
+        console.warn(`${name}: no signature name but yes defs`);
+      }
+    } else {
+      lines.push(info.signatureName + " = sig");
+      for (const def of info.defs) {
+        if (def.prose) {
+          writeComment(lines, INDENT, [def.prose]);
+        }
+        lines.push(INDENT + def.dec);
+      }
+      lines.push("end");
+    }
+    lines.push("");
+    for (const other of info.otherNames) {
+      lines.push(other + " = struct end");
+      lines.push("");
+    }
+    console.warn(`${name}: unused:`, info.unused);
+  }
+  return lines.join("\n");
+}
+
+const order: string[] = [];
+
 async function main() {
   // await fetchAndWriteFiles();
   const files = await getFilesFromDir();
