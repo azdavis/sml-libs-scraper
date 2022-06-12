@@ -53,25 +53,18 @@ interface File {
   text: string;
 }
 
-interface MergedInfoMap {
-  [k: string]: MergedInfo;
-}
-
-function processFiles(files: File[]): MergedInfoMap {
-  const map: MergedInfoMap = {};
-  for (const file of files) {
+function processFiles(files: File[]): MergedInfo[] {
+  return files.map((file) => {
     const name = file.name.replace(/\.html$/, "");
-    assert(!(name in map));
     const info = getInfo(file.name, load(file.text));
     const merged = mergeDecsAndDefs(info.sigDecs, info.defs);
-    map[name] = {
+    return {
       synopsis: info.synopsis,
       desc: info.desc,
       defs: merged.defs,
       unused: merged.unused,
     };
-  }
-  return map;
+  });
 }
 
 interface MultiDef {
@@ -80,7 +73,7 @@ interface MultiDef {
 }
 
 interface Info {
-  synopsis: string | null;
+  synopsis: string[];
   desc: string[];
   sigDecs: string[];
   defs: MultiDef[];
@@ -132,13 +125,13 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const headers = $("h4").toArray();
   const synopsisHeader = headers.find((x) => getCleanText($(x)) == "Synopsis");
   const desc: string[] = [];
-  let synopsis: string | null = null;
+  let synopsis: string[] = [];
   if (synopsisHeader === undefined) {
     console.warn(`${name}: missing synopsis`);
   } else {
     let cur = $(synopsisHeader).next();
     assert(cur.length === 1 && cur.is("blockquote"));
-    synopsis = getCleanText(cur);
+    synopsis = breakSmlAcrossLines(getCleanText(cur));
     for (;;) {
       cur = cur.next();
       assert(cur.length === 1);
@@ -197,7 +190,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
 }
 
 interface MergedInfo {
-  synopsis: string | null;
+  synopsis: string[];
   desc: string[];
   defs: Def[];
   unused: { [k: string]: string };
@@ -274,6 +267,7 @@ async function main() {
   // await fetchAndWriteFiles();
   const files = await getFilesFromDir();
   const map = processFiles(files);
+
   await writeFile("out.json", JSON.stringify(map, null, 2));
 }
 
