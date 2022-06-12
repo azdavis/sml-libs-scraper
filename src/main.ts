@@ -2,6 +2,7 @@ import { Cheerio, load, type CheerioAPI, type Element } from "cheerio";
 import { readdir, readFile, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
+import { order } from "./order.js";
 
 const rootUrl = "https://smlfamily.github.io/Basis";
 
@@ -53,19 +54,24 @@ interface File {
   text: string;
 }
 
-function processFiles(files: File[]): MergedInfo[] {
-  return files.map((file) => {
+type MergedInfoMap = Map<string, MergedInfo>;
+
+function processFiles(files: File[]): MergedInfoMap {
+  const ret: MergedInfoMap = new Map();
+  for (const file of files) {
     const name = file.name.replace(/\.html$/, "");
+    assert(!ret.has(name));
     const info = getInfo(file.name, load(file.text));
     const merged = mergeDecsAndDefs(info.sigDecs, info.defs);
-    return {
+    ret.set(name, {
       signatureName: info.signatureName,
       otherNames: info.otherNames,
       desc: info.desc,
       defs: merged.defs,
       unused: merged.unused,
-    };
-  });
+    });
+  }
+  return ret;
 }
 
 interface MultiDef {
@@ -332,13 +338,19 @@ function mkSmlFile(name: string, infos: MergedInfo[]): string {
   return lines.join("\n");
 }
 
-const order: string[] = [];
-
 async function main() {
   // await fetchAndWriteFiles();
   const files = await getFilesFromDir();
-  const info = processFiles(files);
-  await writeFile("out.json", JSON.stringify(info, null, 2));
+  const map = processFiles(files);
+  const out: MergedInfo[] = [];
+  for (const key of order) {
+    const val = map.get(key);
+    if (val === undefined) {
+      throw new Error(`key in order but not map: ${key}`);
+    }
+    out.push(val);
+  }
+  await writeFile("out.json", JSON.stringify(out, null, 2));
 }
 
 main().catch((e) => {
