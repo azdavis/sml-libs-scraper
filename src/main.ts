@@ -59,7 +59,8 @@ function processFiles(files: File[]): MergedInfo[] {
     const info = getInfo(file.name, load(file.text));
     const merged = mergeDecsAndDefs(info.sigDecs, info.defs);
     return {
-      synopsis: info.synopsis,
+      signatureName: info.signatureName,
+      otherNames: info.otherNames,
       desc: info.desc,
       defs: merged.defs,
       unused: merged.unused,
@@ -73,7 +74,8 @@ interface MultiDef {
 }
 
 interface Info {
-  synopsis: string[];
+  signatureName: string | null;
+  otherNames: string[];
   desc: string[];
   sigDecs: string[];
   defs: MultiDef[];
@@ -125,13 +127,24 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const headers = $("h4").toArray();
   const synopsisHeader = headers.find((x) => getCleanText($(x)) == "Synopsis");
   const desc: string[] = [];
-  let synopsis: string[] = [];
+  let signatureName: string | null = null;
+  let otherNames: string[] = [];
   if (synopsisHeader === undefined) {
     console.warn(`${name}: missing synopsis`);
   } else {
     let cur = $(synopsisHeader).next();
     assert(cur.length === 1 && cur.is("blockquote"));
-    synopsis = breakSmlAcrossLines(getCleanText(cur));
+    const synopsis = breakSmlAcrossLines(getCleanText(cur));
+    const fst = synopsis.shift();
+    if (fst === undefined) {
+      throw new Error("empty synopsis");
+    }
+    if (fst.split(" ")[0] === "signature") {
+      signatureName = fst;
+    } else {
+      console.warn(`${name}: missing signature in synopsis`);
+    }
+    otherNames = synopsis;
     for (;;) {
       cur = cur.next();
       assert(cur.length === 1);
@@ -182,7 +195,8 @@ function getInfo(name: string, $: CheerioAPI): Info {
     assert(items.length === 0);
   }
   return {
-    synopsis,
+    signatureName,
+    otherNames,
     desc,
     sigDecs,
     defs,
@@ -190,7 +204,8 @@ function getInfo(name: string, $: CheerioAPI): Info {
 }
 
 interface MergedInfo {
-  synopsis: string[];
+  signatureName: string | null;
+  otherNames: string[];
   desc: string[];
   defs: Def[];
   unused: { [k: string]: string };
@@ -267,9 +282,8 @@ async function getFilesFromDir(): Promise<File[]> {
 async function main() {
   // await fetchAndWriteFiles();
   const files = await getFilesFromDir();
-  const map = processFiles(files);
-
-  await writeFile("out.json", JSON.stringify(map, null, 2));
+  const info = processFiles(files);
+  await writeFile("out.json", JSON.stringify(info, null, 2));
 }
 
 main().catch((e) => {
