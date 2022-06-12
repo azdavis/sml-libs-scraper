@@ -1,8 +1,7 @@
 import { Cheerio, load, type CheerioAPI, type Element } from "cheerio";
-import { readdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
-import { order } from "./order.js";
 
 const rootUrl = "https://smlfamily.github.io/Basis";
 
@@ -334,27 +333,19 @@ function mkOneSml(lines: string[], name: string, info: MergedInfo) {
   }
   console.warn(`${name}: unused:`, info.unused);
 }
-function mkSmlFile(infos: [string, MergedInfo][]): string {
-  let lines: string[] = [];
-  for (const [name, info] of infos) {
-    mkOneSml(lines, name, info);
-  }
-  return lines.join("\n");
-}
+
+const SML_OUT = "sml";
 
 async function main() {
   // await fetchAndWriteFiles();
   const files = await getFilesFromDir();
   const map = processFiles(files);
-  const out: [string, MergedInfo][] = [];
-  for (const name of order) {
-    const val = map.get(name);
-    if (val === undefined) {
-      throw new Error(`name in order but not map: ${name}`);
-    }
-    out.push([name, val]);
+  await mkdir(SML_OUT, { recursive: true });
+  for (const [name, val] of map.entries()) {
+    let lines: string[] = [];
+    mkOneSml(lines, name, val);
+    await writeFile(path.join(SML_OUT, name + ".sml"), lines.join("\n"));
   }
-  await writeFile("out.sml", mkSmlFile(out));
 }
 
 main().catch((e) => {
