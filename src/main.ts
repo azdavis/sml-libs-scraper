@@ -285,7 +285,7 @@ async function getFilesFromDir(): Promise<File[]> {
   );
 }
 
-const MAX_LINE_WIDTH = 80;
+const MAX_LINE_WIDTH = 100;
 // mutates lines to add the comment indented with indent.
 function writeComment(lines: string[], indent: string, paragraphs: string[]) {
   lines.push(indent + "(*!");
@@ -310,30 +310,34 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
 }
 
 const INDENT = "  ";
+
+function mkOneSml(lines: string[], name: string, info: MergedInfo) {
+  writeComment(lines, "", info.desc);
+  if (info.signatureName === null) {
+    if (info.defs.length !== 0) {
+      console.warn(`${name}: no signature name but yes defs`);
+    }
+  } else {
+    lines.push(info.signatureName + " = sig");
+    for (const def of info.defs) {
+      if (def.prose) {
+        writeComment(lines, INDENT, [def.prose]);
+      }
+      lines.push(INDENT + def.dec);
+    }
+    lines.push("end");
+  }
+  lines.push("");
+  for (const other of info.otherNames) {
+    lines.push(other + " = struct end");
+    lines.push("");
+  }
+  console.warn(`${name}: unused:`, info.unused);
+}
 function mkSmlFile(infos: [string, MergedInfo][]): string {
   let lines: string[] = [];
   for (const [name, info] of infos) {
-    writeComment(lines, "", info.desc);
-    if (info.signatureName === null) {
-      if (info.defs.length !== 0) {
-        console.warn(`${name}: no signature name but yes defs`);
-      }
-    } else {
-      lines.push(info.signatureName + " = sig");
-      for (const def of info.defs) {
-        if (def.prose) {
-          writeComment(lines, INDENT, [def.prose]);
-        }
-        lines.push(INDENT + def.dec);
-      }
-      lines.push("end");
-    }
-    lines.push("");
-    for (const other of info.otherNames) {
-      lines.push(other + " = struct end");
-      lines.push("");
-    }
-    console.warn(`${name}: unused:`, info.unused);
+    mkOneSml(lines, name, info);
   }
   return lines.join("\n");
 }
@@ -342,15 +346,15 @@ async function main() {
   // await fetchAndWriteFiles();
   const files = await getFilesFromDir();
   const map = processFiles(files);
-  const out: MergedInfo[] = [];
+  const out: [string, MergedInfo][] = [];
   for (const name of order) {
     const val = map.get(name);
     if (val === undefined) {
       throw new Error(`name in order but not map: ${name}`);
     }
-    out.push(val);
+    out.push([name, val]);
   }
-  await writeFile("out.json", JSON.stringify(out, null, 2));
+  await writeFile("out.sml", mkSmlFile(out));
 }
 
 main().catch((e) => {
