@@ -219,21 +219,22 @@ function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
   const used = new Set<string>();
   for (const def of multiDefs) {
     assert(def.items.length !== 0);
-    let desc: string;
+    const fst = def.items[0];
+    const fstName = getName(fst);
     if (def.items.length === 1) {
-      const item = def.items[0];
-      if (decStart.has(item.split(" ")[0])) {
+      let desc: string;
+      if (decStart.has(fst.split(" ")[0])) {
         desc = def.desc;
       } else {
         desc = def.items[0] + " " + def.desc;
       }
+      map.set(fstName, desc);
     } else {
-      const joined = def.items.join(", ");
-      desc = `(This is shared documentation for: ${joined}.) ${def.desc}`;
-    }
-    for (const item of def.items) {
-      const name = getName(item);
-      map.set(name, desc);
+      map.set(fstName, def.desc);
+      for (let i = 1; i < def.items.length; i++) {
+        const name = getName(def.items[i]);
+        map.set(name, `See ${fstName}.`);
+      }
     }
   }
   const defs = sigDecs.map((dec) => {
