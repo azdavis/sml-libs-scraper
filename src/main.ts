@@ -218,7 +218,7 @@ interface MergedInfo {
 
 interface Def {
   dec: string;
-  prose: string | null;
+  comment: string | null;
 }
 
 function getName(s: string): string {
@@ -261,7 +261,7 @@ function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
     const name = getName(dec);
     const val = map.get(name);
     used.add(name);
-    return { dec, prose: val === undefined ? null : val };
+    return { dec, comment: val === undefined ? null : val };
   });
   for (const k of used.values()) {
     if (used.has(k)) {
@@ -318,8 +318,8 @@ function mkOneSml(lines: string[], name: string, info: MergedInfo) {
   } else {
     lines.push(info.signatureName + " = sig");
     for (const def of info.defs) {
-      if (def.prose) {
-        writeComment(lines, INDENT, [def.prose]);
+      if (def.comment) {
+        writeComment(lines, INDENT, [def.comment]);
       }
       lines.push(INDENT + def.dec);
     }
