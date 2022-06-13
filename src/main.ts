@@ -101,18 +101,18 @@ const decStart = new Set([
   "functor",
 ]);
 
+const precedesType = new Set(["where", "and", "sharing"]);
+
 function breakSmlAcrossLines(text: string): string[] {
   const ret: string[] = [];
   const tokens = text.split(" ");
   let cur: string[] = [];
   let prev: string | null = null;
   for (const token of tokens) {
-    // hack to not split on 'where type' or 'and type' or 'sharing type'
+    // hack to not split on things like 'where type'
     if (
       decStart.has(token) &&
-      (token !== "type" ||
-        prev === null ||
-        (prev !== "where" && prev !== "and" && prev !== "sharing"))
+      (token !== "type" || prev === null || !precedesType.has(prev))
     ) {
       if (cur.length !== 0) {
         ret.push(cur.join(" "));
