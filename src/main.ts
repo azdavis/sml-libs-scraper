@@ -61,11 +61,11 @@ function processFiles(files: File[]): MergedInfoMap {
     const name = file.name.replace(/\.html$/, "");
     assert(!ret.has(name));
     const info = getInfo(file.name, load(file.text));
-    const merged = mergeDecsAndDefs(info.sigDecs, info.defs);
+    const merged = mergeDecsAndDefs(info.specs, info.defs);
     ret.set(name, {
       signatureName: info.signatureName,
       otherNames: info.otherNames,
-      desc: info.desc,
+      comment: info.comment,
       defs: merged.defs,
       unused: merged.unused,
     });
@@ -75,14 +75,14 @@ function processFiles(files: File[]): MergedInfoMap {
 
 interface MultiDef {
   items: string[];
-  desc: string;
+  comment: string;
 }
 
 interface Info {
   signatureName: string | null;
   otherNames: string[];
-  desc: string[];
-  sigDecs: string[];
+  comment: string[];
+  specs: string[];
   defs: MultiDef[];
 }
 
@@ -131,7 +131,7 @@ function breakSmlAcrossLines(text: string): string[] {
 function getInfo(name: string, $: CheerioAPI): Info {
   const headers = $("h4").toArray();
   const synopsisHeader = headers.find((x) => getCleanText($(x)) == "Synopsis");
-  const desc: string[] = [];
+  const comment: string[] = [];
   let signatureName: string | null = null;
   let otherNames: string[] = [];
   if (synopsisHeader === undefined) {
@@ -154,7 +154,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
       cur = cur.next();
       assert(cur.length === 1);
       if (cur.is("p")) {
-        desc.push(getCleanText(cur));
+        comment.push(getCleanText(cur));
       } else if (cur.is("hr")) {
         break;
       } else {
@@ -165,13 +165,13 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const interfaceHeader = headers.find(
     (x) => getCleanText($(x)) == "Interface",
   );
-  let sigDecs: string[] = [];
+  let specs: string[] = [];
   if (interfaceHeader === undefined) {
     console.warn(`${name}: missing interface`);
   } else {
     const elem = $(interfaceHeader).next();
     assert(elem.length === 1 && elem.is("blockquote"));
-    sigDecs = breakSmlAcrossLines(getCleanText(elem));
+    specs = breakSmlAcrossLines(getCleanText(elem));
   }
   const descriptionHeader = headers.find(
     (x) => getCleanText($(x)) == "Description",
@@ -191,7 +191,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
           items.push(t);
         }
       } else if (child.is("dd")) {
-        defs.push({ items, desc: getCleanText(child) });
+        defs.push({ items, comment: getCleanText(child) });
         items = [];
       } else {
         console.warn(`${name}: non-dt non-dd child in description, ignoring`);
@@ -199,19 +199,19 @@ function getInfo(name: string, $: CheerioAPI): Info {
     }
     assert(items.length === 0);
   }
-  return { signatureName, otherNames, desc, sigDecs, defs };
+  return { signatureName, otherNames, comment, specs, defs };
 }
 
 interface MergedInfo {
   signatureName: string | null;
   otherNames: string[];
-  desc: string[];
+  comment: string[];
   defs: Def[];
   unused: Map<string, string>;
 }
 
 interface Def {
-  dec: string;
+  spec: string;
   comment: string | null;
 }
 
@@ -228,7 +228,7 @@ interface Merged {
   unused: Map<string, string>;
 }
 
-function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
+function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
   const map = new Map<string, string>();
   const used = new Set<string>();
   for (const def of multiDefs) {
@@ -236,26 +236,26 @@ function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
     const fst = def.items[0];
     const fstName = getName(fst);
     if (def.items.length === 1) {
-      let desc: string;
+      let comment: string;
       if (decStart.has(fst.split(" ")[0])) {
-        desc = def.desc;
+        comment = def.comment;
       } else {
-        desc = def.items[0] + " " + def.desc;
+        comment = def.items[0] + " " + def.comment;
       }
-      map.set(fstName, desc);
+      map.set(fstName, comment);
     } else {
-      map.set(fstName, def.desc);
+      map.set(fstName, def.comment);
       for (let i = 1; i < def.items.length; i++) {
         const name = getName(def.items[i]);
         map.set(name, `See ${fstName}.`);
       }
     }
   }
-  const defs = sigDecs.map((dec) => {
-    const name = getName(dec);
+  const defs = specs.map((spec) => {
+    const name = getName(spec);
     const val = map.get(name);
     used.add(name);
-    return { dec, comment: val === undefined ? null : val };
+    return { spec, comment: val === undefined ? null : val };
   });
   for (const k of used.values()) {
     if (used.has(k)) {
@@ -304,7 +304,7 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
 const INDENT = "  ";
 
 function mkOneSml(lines: string[], name: string, info: MergedInfo) {
-  writeComment(lines, "", info.desc);
+  writeComment(lines, "", info.comment);
   if (info.signatureName === null) {
     if (info.defs.length !== 0) {
       console.warn(`${name}: no signature name but yes defs`);
@@ -315,7 +315,7 @@ function mkOneSml(lines: string[], name: string, info: MergedInfo) {
       if (def.comment) {
         writeComment(lines, INDENT, [def.comment]);
       }
-      lines.push(INDENT + def.dec);
+      lines.push(INDENT + def.spec);
     }
     lines.push("end");
   }
