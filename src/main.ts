@@ -308,6 +308,7 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
 }
 
 const INDENT = "  ";
+const WHERE_TYPE = "where type";
 
 function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   writeComment(lines, "", info.comment);
@@ -321,7 +322,15 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
       if (def.comment !== null) {
         writeComment(lines, INDENT, [def.comment]);
       }
-      lines.push(INDENT + def.spec);
+      const specWithWhereType = def.spec.split(WHERE_TYPE);
+      const fst = specWithWhereType.shift();
+      if (fst === undefined) {
+        throw new Error(`no spec before ${WHERE_TYPE}`);
+      }
+      lines.push(INDENT + fst.trim());
+      for (const wt of specWithWhereType) {
+        lines.push(INDENT + INDENT + WHERE_TYPE + " " + wt.trim());
+      }
     }
     lines.push("end");
   }
