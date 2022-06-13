@@ -213,7 +213,7 @@ interface MergedInfo {
   otherNames: string[];
   desc: string[];
   defs: Def[];
-  unused: { [k: string]: string };
+  unused: Map<string, string>;
 }
 
 interface Def {
@@ -231,7 +231,7 @@ function getName(s: string): string {
 
 interface Merged {
   defs: Def[];
-  unused: { [k: string]: string };
+  unused: Map<string, string>;
 }
 
 function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
@@ -263,13 +263,12 @@ function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
     used.add(name);
     return { dec, prose: val === undefined ? null : val };
   });
-  const unused: { [k: string]: string } = {};
-  for (const [k, v] of map.entries()) {
-    if (!used.has(k)) {
-      unused[k] = v;
+  for (const k of used.values()) {
+    if (used.has(k)) {
+      map.delete(k);
     }
   }
-  return { defs, unused };
+  return { defs, unused: map };
 }
 
 async function getFilesFromDir(): Promise<File[]> {
