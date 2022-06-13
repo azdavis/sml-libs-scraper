@@ -199,13 +199,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
     }
     assert(items.length === 0);
   }
-  return {
-    signatureName,
-    otherNames,
-    desc,
-    sigDecs,
-    defs,
-  };
+  return { signatureName, otherNames, desc, sigDecs, defs };
 }
 
 interface MergedInfo {
