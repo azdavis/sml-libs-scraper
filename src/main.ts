@@ -330,7 +330,9 @@ function mkOneSml(lines: string[], name: string, info: MergedInfo) {
     lines.push(other + " = struct end");
     lines.push("");
   }
-  console.warn(`${name}: unused:`, info.unused);
+  if (info.unused.size !== 0) {
+    console.warn(`${name}: unused:`, info.unused);
+  }
 }
 
 const smlOut = "sml";
