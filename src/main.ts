@@ -3,10 +3,6 @@ import { mkdir, readdir, readFile, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
 
-const rootUrl = "https://smlfamily.github.io/Basis";
-
-const outDir = "html";
-
 function assert(x: boolean) {
   if (!x) {
     throw new Error("assert failed");
@@ -27,6 +23,9 @@ function filterMap<T, U>(f: (x: T) => U | undefined, xs: T[]): U[] {
 function id<T>(x: T): T {
   return x;
 }
+
+const rootUrl = "https://smlfamily.github.io/Basis";
+const outDir = "html";
 
 async function fetchAndWriteFiles(): Promise<File[]> {
   const resp = await fetch(`${rootUrl}/manpages.html`);
