@@ -1,5 +1,5 @@
 import { Cheerio, load, type CheerioAPI, type Element } from "cheerio";
-import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { access, mkdir, readdir, readFile, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
 
@@ -25,7 +25,7 @@ function id<T>(x: T): T {
 }
 
 const rootUrl = "https://smlfamily.github.io/Basis";
-const outDir = "html";
+const htmlOut = "html";
 
 async function fetchAndWriteFiles(): Promise<File[]> {
   const resp = await fetch(`${rootUrl}/manpages.html`);
@@ -41,7 +41,7 @@ async function fetchAndWriteFiles(): Promise<File[]> {
     urls.map(async (name) => {
       const resp = await fetch(`${rootUrl}/${name}`);
       const text = await resp.text();
-      await writeFile(path.join(outDir, name), text);
+      await writeFile(path.join(htmlOut, name), text);
       return { name, text };
     }),
   );
@@ -272,10 +272,10 @@ function mergeDecsAndDefs(sigDecs: string[], multiDefs: MultiDef[]): Merged {
 }
 
 async function getFilesFromDir(): Promise<File[]> {
-  const fileNames = await readdir(outDir);
+  const fileNames = await readdir(htmlOut);
   return Promise.all(
     fileNames.map((name) =>
-      readFile(path.join(outDir, name)).then((text) => ({
+      readFile(path.join(htmlOut, name)).then((text) => ({
         name,
         text: text.toString(),
       })),
@@ -333,17 +333,21 @@ function mkOneSml(lines: string[], name: string, info: MergedInfo) {
   console.warn(`${name}: unused:`, info.unused);
 }
 
-const SML_OUT = "sml";
+const smlOut = "sml";
 
 async function main() {
-  // await fetchAndWriteFiles();
+  try {
+    await access(htmlOut);
+  } catch {
+    await fetchAndWriteFiles();
+  }
   const files = await getFilesFromDir();
   const map = processFiles(files);
-  await mkdir(SML_OUT, { recursive: true });
+  await mkdir(smlOut, { recursive: true });
   for (const [name, val] of map.entries()) {
     let lines: string[] = [];
     mkOneSml(lines, name, val);
-    await writeFile(path.join(SML_OUT, name + ".sml"), lines.join("\n"));
+    await writeFile(path.join(smlOut, name + ".sml"), lines.join("\n"));
   }
 }
 
