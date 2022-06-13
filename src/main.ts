@@ -93,7 +93,7 @@ function getCleanText(x: Cheerio<Element>): string {
   return x.text().trim().replaceAll(/\s+/g, " ");
 }
 
-const decStart = new Set([
+const starter = new Set([
   "type",
   "eqtype",
   "datatype",
@@ -102,6 +102,7 @@ const decStart = new Set([
   "structure",
   "signature",
   "functor",
+  "include",
 ]);
 
 const precedesType = new Set(["where", "and", "sharing"]);
@@ -114,7 +115,7 @@ function breakSmlAcrossLines(text: string): string[] {
   for (const token of tokens) {
     // hack to not split on things like 'where type'
     if (
-      decStart.has(token) &&
+      starter.has(token) &&
       (token !== "type" || prev === null || !precedesType.has(prev))
     ) {
       if (cur.length !== 0) {
@@ -218,7 +219,7 @@ interface Def {
 }
 
 function getName(s: string): string {
-  const name = s.split(" ").find((x) => !decStart.has(x) && !x.startsWith("'"));
+  const name = s.split(" ").find((x) => !starter.has(x) && !x.startsWith("'"));
   if (name === undefined) {
     throw new Error(`couldn't get name for: ${s}`);
   }
@@ -239,7 +240,7 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
     const fstName = getName(fst);
     if (def.items.length === 1) {
       let comment: string;
-      if (decStart.has(fst.split(" ")[0])) {
+      if (starter.has(fst.split(" ")[0])) {
         comment = def.comment;
       } else {
         comment = def.items[0] + " " + def.comment;
