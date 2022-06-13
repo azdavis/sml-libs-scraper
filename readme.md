@@ -1,5 +1,5 @@
 # SML Basis
 
-Parsing the [Standard ML Basis][basis] documentation into a machine-readable format.
+Parsing the generated [Standard ML Basis][basis] documentation and generating various things from it, like SML files.
 
 [basis]: https://smlfamily.github.io/Basis
