@@ -37,6 +37,7 @@ async function fetchAndWriteFiles(): Promise<File[]> {
       .toArray()
       .map((x) => x.attribs["href"]),
   );
+  await mkdir(htmlOut, { recursive: true });
   return Promise.all(
     urls.map(async (name) => {
       const resp = await fetch(`${rootUrl}/${name}`);
