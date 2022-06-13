@@ -3,6 +3,8 @@ import { access, mkdir, readdir, readFile, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
 
+const EMIT_COMMENTS = false;
+
 function assert(x: boolean) {
   if (!x) {
     throw new Error("assert failed");
@@ -280,6 +282,9 @@ async function getFilesFromDir(): Promise<File[]> {
 const MAX_LINE_WIDTH = 100;
 // mutates lines to add the comment indented with indent.
 function writeComment(lines: string[], indent: string, paragraphs: string[]) {
+  if (!EMIT_COMMENTS) {
+    return;
+  }
   lines.push(indent + "(*!");
   for (let i = 0; i < paragraphs.length; i++) {
     let cur = indent;
@@ -303,7 +308,7 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
 
 const INDENT = "  ";
 
-function mkOneSml(lines: string[], name: string, info: MergedInfo) {
+function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   writeComment(lines, "", info.comment);
   if (info.signatureName === null) {
     if (info.defs.length !== 0) {
@@ -312,7 +317,7 @@ function mkOneSml(lines: string[], name: string, info: MergedInfo) {
   } else {
     lines.push(info.signatureName + " = sig");
     for (const def of info.defs) {
-      if (def.comment) {
+      if (def.comment !== null) {
         writeComment(lines, INDENT, [def.comment]);
       }
       lines.push(INDENT + def.spec);
@@ -342,7 +347,7 @@ async function main() {
   await mkdir(smlOut, { recursive: true });
   for (const [name, val] of map.entries()) {
     let lines: string[] = [];
-    mkOneSml(lines, name, val);
+    mkSmlFile(lines, name, val);
     await writeFile(path.join(smlOut, name + ".sml"), lines.join("\n"));
   }
 }
