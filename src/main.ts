@@ -30,10 +30,10 @@ const htmlOut = "html";
 async function fetchAndWriteFiles(): Promise<File[]> {
   const resp = await fetch(`${rootUrl}/manpages.html`);
   const text = await resp.text();
-  const body = load(text);
+  const $ = load(text);
   const urls = filterMap(
     id,
-    body("h4 a")
+    $("h4 a")
       .toArray()
       .map((x) => x.attribs["href"]),
   );
