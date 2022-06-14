@@ -342,6 +342,9 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   for (const other of info.otherNames) {
     splitWhereType(lines, "", other + " = struct end");
   }
+  if (info.otherNames.length !== 0) {
+    lines.push("");
+  }
   if (info.unused.size !== 0) {
     console.warn(`${name}: unused:`, info.unused);
   }
