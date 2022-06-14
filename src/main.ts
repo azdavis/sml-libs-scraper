@@ -310,6 +310,18 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
 const INDENT = "  ";
 const WHERE_TYPE = "where type";
 
+function splitWhereType(lines: string[], indent: string, s: string) {
+  const parts = s.split(WHERE_TYPE);
+  const fst = parts.shift();
+  if (fst === undefined) {
+    throw new Error(`splitting on ${WHERE_TYPE} yielded []`);
+  }
+  lines.push(indent + fst.trim());
+  for (const wt of parts) {
+    lines.push(indent + INDENT + WHERE_TYPE + " " + wt.trim());
+  }
+}
+
 function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   writeComment(lines, "", info.comment);
   if (info.signatureName === null) {
@@ -322,22 +334,13 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
       if (def.comment !== null) {
         writeComment(lines, INDENT, [def.comment]);
       }
-      const specWithWhereType = def.spec.split(WHERE_TYPE);
-      const fst = specWithWhereType.shift();
-      if (fst === undefined) {
-        throw new Error(`no spec before ${WHERE_TYPE}`);
-      }
-      lines.push(INDENT + fst.trim());
-      for (const wt of specWithWhereType) {
-        lines.push(INDENT + INDENT + WHERE_TYPE + " " + wt.trim());
-      }
+      splitWhereType(lines, INDENT, def.spec);
     }
     lines.push("end");
   }
   lines.push("");
   for (const other of info.otherNames) {
-    lines.push(other + " = struct end");
-    lines.push("");
+    splitWhereType(lines, "", other + " = struct end");
   }
   if (info.unused.size !== 0) {
     console.warn(`${name}: unused:`, info.unused);
