@@ -115,8 +115,9 @@ function breakSmlAcrossLines(text: string): string[] {
   for (const token of tokens) {
     // hack to not split on things like 'where type'
     if (
-      starter.has(token) &&
-      (token !== "type" || prev === null || !precedesType.has(prev))
+      token === "end" ||
+      (starter.has(token) &&
+        (token !== "type" || prev === null || !precedesType.has(prev)))
     ) {
       if (cur.length !== 0) {
         ret.push(cur.join(" "));
@@ -316,10 +317,15 @@ function splitWhereType(lines: string[], indent: string, s: string) {
   if (fst === undefined) {
     throw new Error(`splitting on ${WHERE_TYPE} yielded []`);
   }
-  lines.push(indent + fst.trim());
+  const fstTrim = fst.trim();
+  lines.push(indent + fstTrim);
   for (const wt of parts) {
     lines.push(indent + INDENT + WHERE_TYPE + " " + wt.trim());
   }
+}
+
+function indent(n: number): string {
+  return Array(n).fill(INDENT).join("");
 }
 
 function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
@@ -330,11 +336,19 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
     }
   } else {
     lines.push(info.signatureName + " = sig");
+    let level = 1;
     for (const def of info.defs) {
       if (def.comment !== null) {
-        writeComment(lines, INDENT, [def.comment]);
+        writeComment(lines, indent(level), [def.comment]);
       }
-      splitWhereType(lines, INDENT, def.spec);
+      const trimSpec = def.spec.trim();
+      if (trimSpec.endsWith("end")) {
+        level -= 1;
+      }
+      splitWhereType(lines, indent(level), def.spec);
+      if (trimSpec.endsWith(": sig")) {
+        level += 1;
+      }
     }
     lines.push("end");
   }
