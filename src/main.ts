@@ -69,7 +69,7 @@ function processFiles(files: File[]): MergedInfoMap {
       otherNames: info.otherNames,
       comment: info.comment,
       defs: merged.defs,
-      unused: merged.unused,
+      extra: merged.extra,
     });
   }
   return ret;
@@ -211,7 +211,7 @@ interface MergedInfo {
   otherNames: string[];
   comment: string[];
   defs: Def[];
-  unused: Map<string, string>;
+  extra: Extra;
 }
 
 interface Def {
@@ -227,18 +227,28 @@ function getName(s: string): string {
   return name;
 }
 
+interface Extra {
+  unused: Map<string, string>;
+  duplicate: Map<string, string>;
+}
+
 interface Merged {
   defs: Def[];
-  unused: Map<string, string>;
+  extra: Extra;
 }
 
 function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
   const map = new Map<string, string>();
+  const duplicate = new Map<string, string>();
   const used = new Set<string>();
   for (const def of multiDefs) {
     assert(def.items.length !== 0);
     const fst = def.items[0];
     const fstName = getName(fst);
+    const existingEntry = map.get(fstName);
+    if (existingEntry) {
+      duplicate.set(fstName, existingEntry);
+    }
     if (def.items.length === 1) {
       let comment: string;
       if (starter.has(fst.split(" ")[0])) {
@@ -266,7 +276,7 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
       map.delete(k);
     }
   }
-  return { defs, unused: map };
+  return { defs, extra: { unused: map, duplicate } };
 }
 
 async function getFilesFromDir(): Promise<File[]> {
@@ -359,8 +369,11 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   if (info.otherNames.length !== 0) {
     lines.push("");
   }
-  if (info.unused.size !== 0) {
-    console.warn(`${name}: unused:`, info.unused);
+  if (info.extra.unused.size !== 0) {
+    console.warn(`${name}: unused:`, info.extra.unused);
+  }
+  if (info.extra.duplicate.size !== 0) {
+    console.warn(`${name}: duplicate:`, info.extra.duplicate);
   }
 }
 
