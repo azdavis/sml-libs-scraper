@@ -230,6 +230,7 @@ function getName(s: string): string {
 interface Extra {
   unused: Map<string, string>;
   duplicate: Map<string, string>;
+  usedMultiple: Set<string>;
 }
 
 interface Merged {
@@ -241,6 +242,7 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
   const map = new Map<string, string>();
   const duplicate = new Map<string, string>();
   const used = new Set<string>();
+  const usedMultiple = new Set<string>();
   for (const def of multiDefs) {
     assert(def.items.length !== 0);
     const fst = def.items[0];
@@ -268,6 +270,9 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
   const defs = specs.map((spec) => {
     const name = getName(spec);
     const val = map.get(name);
+    if (used.has(name)) {
+      usedMultiple.add(name);
+    }
     used.add(name);
     return { spec, comment: val === undefined ? null : val };
   });
@@ -276,7 +281,7 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
       map.delete(k);
     }
   }
-  return { defs, extra: { unused: map, duplicate } };
+  return { defs, extra: { unused: map, duplicate, usedMultiple } };
 }
 
 async function getFilesFromDir(): Promise<File[]> {
@@ -374,6 +379,9 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   }
   if (info.extra.duplicate.size !== 0) {
     console.warn(`${name}: duplicate:`, info.extra.duplicate);
+  }
+  if (info.extra.usedMultiple.size !== 0) {
+    console.warn(`${name}: used multiple times:`, info.extra.usedMultiple);
   }
 }
 
