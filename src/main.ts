@@ -1,4 +1,4 @@
-import { get as stdBasis } from "./std-basis";
+import { get as stdBasis } from "./std-basis.js";
 
 async function main() {
   await stdBasis();

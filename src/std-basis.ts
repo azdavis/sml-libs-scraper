@@ -9,8 +9,15 @@ import type {
   MergedInfo,
   MergedInfoMap,
   MultiDef,
-} from "./types";
-import { assert, emitComments, filterMap, htmlOut, id, smlOut } from "./util";
+} from "./types.js";
+import {
+  assert,
+  emitComments,
+  filterMap,
+  htmlOut,
+  id,
+  smlOut,
+} from "./util.js";
 
 const rootDir = "std-basis";
 
