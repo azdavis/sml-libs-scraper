@@ -1,3 +1,7 @@
+export const emitComments = false;
+export const htmlOut = "html";
+export const smlOut = "sml";
+
 export function assert(x: boolean) {
   if (!x) {
     throw new Error("assert failed");

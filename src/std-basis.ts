@@ -10,12 +10,11 @@ import type {
   MergedInfoMap,
   MultiDef,
 } from "./types";
-import { assert, filterMap, id } from "./util";
+import { assert, emitComments, filterMap, htmlOut, id, smlOut } from "./util";
 
-const EMIT_COMMENTS = false;
+const rootDir = "std-basis";
 
 const rootUrl = "https://smlfamily.github.io/Basis";
-const htmlOut = "html";
 
 async function fetchAndWriteFiles(): Promise<File[]> {
   const resp = await fetch(`${rootUrl}/manpages.html`);
@@ -26,12 +25,12 @@ async function fetchAndWriteFiles(): Promise<File[]> {
       .toArray()
       .map((x) => x.attribs["href"]),
   );
-  await mkdir(htmlOut, { recursive: true });
+  await mkdir(path.join(rootDir, htmlOut), { recursive: true });
   return Promise.all(
     stdBasisUrls.map(async (name) => {
       const resp = await fetch(`${rootUrl}/${name}`);
       const text = await resp.text();
-      await writeFile(path.join(htmlOut, name), text);
+      await writeFile(path.join(rootDir, htmlOut, name), text);
       return { name, text };
     }),
   );
@@ -228,10 +227,10 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
 }
 
 async function getFilesFromDir(): Promise<File[]> {
-  const fileNames = await readdir(htmlOut);
+  const fileNames = await readdir(path.join(rootDir, htmlOut));
   return Promise.all(
     fileNames.map((name) =>
-      readFile(path.join(htmlOut, name)).then((text) => ({
+      readFile(path.join(rootDir, htmlOut, name)).then((text) => ({
         name,
         text: text.toString(),
       })),
@@ -239,10 +238,11 @@ async function getFilesFromDir(): Promise<File[]> {
   );
 }
 
-const MAX_LINE_WIDTH = 100;
+const maxLineWidth = 100;
+
 // mutates lines to add the comment indented with indent.
 function writeComment(lines: string[], indent: string, paragraphs: string[]) {
-  if (!EMIT_COMMENTS) {
+  if (!emitComments) {
     return;
   }
   lines.push(indent + "(*!");
@@ -251,7 +251,7 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
     const paragraph = paragraphs[i];
     for (const word of paragraph.split(" ")) {
       const toAdd = (cur === indent ? "" : " ") + word;
-      if (cur.length + toAdd.length > MAX_LINE_WIDTH) {
+      if (cur.length + toAdd.length > maxLineWidth) {
         lines.push(cur);
         cur = indent + word;
       } else {
@@ -266,24 +266,24 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
   lines.push(indent + "!*)");
 }
 
-const INDENT = "  ";
-const WHERE_TYPE = "where type";
+const indentStr = "  ";
+const whereType = "where type";
 
 function splitWhereType(lines: string[], indent: string, s: string) {
-  const parts = s.split(WHERE_TYPE);
+  const parts = s.split(whereType);
   const fst = parts.shift();
   if (fst === undefined) {
-    throw new Error(`splitting on ${WHERE_TYPE} yielded []`);
+    throw new Error(`splitting on ${whereType} yielded []`);
   }
   const fstTrim = fst.trim();
   lines.push(indent + fstTrim);
   for (const wt of parts) {
-    lines.push(indent + INDENT + WHERE_TYPE + " " + wt.trim());
+    lines.push(indent + indentStr + whereType + " " + wt.trim());
   }
 }
 
 function indent(n: number): string {
-  return Array(n).fill(INDENT).join("");
+  return Array(n).fill(indentStr).join("");
 }
 
 function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
@@ -328,20 +328,21 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   }
 }
 
-const smlOut = "sml";
-
 export async function get() {
   try {
-    await access(htmlOut);
+    await access(path.join(rootDir, htmlOut));
   } catch {
     await fetchAndWriteFiles();
   }
   const files = await getFilesFromDir();
   const map = processFiles(files);
-  await mkdir(smlOut, { recursive: true });
+  await mkdir(path.join(rootDir, smlOut), { recursive: true });
   for (const [name, val] of map.entries()) {
     let lines: string[] = [];
     mkSmlFile(lines, name, val);
-    await writeFile(path.join(smlOut, name + ".sml"), lines.join("\n"));
+    await writeFile(
+      path.join(rootDir, smlOut, name + ".sml"),
+      lines.join("\n"),
+    );
   }
 }
