@@ -72,8 +72,7 @@ export const smlStarter = new Set([
 
 const precedesType = new Set(["where", "and", "sharing"]);
 
-export function breakSmlAcrossLines(text: string): string[] {
-  const ret: string[] = [];
+export function breakSmlAcrossLines(ac: string[], text: string) {
   const tokens = text.split(" ");
   let cur: string[] = [];
   let prev: string | null = null;
@@ -85,7 +84,7 @@ export function breakSmlAcrossLines(text: string): string[] {
         (token !== "type" || prev === null || !precedesType.has(prev)))
     ) {
       if (cur.length !== 0) {
-        ret.push(cur.join(" "));
+        ac.push(cur.join(" "));
       }
       cur = [token];
     } else {
@@ -93,6 +92,5 @@ export function breakSmlAcrossLines(text: string): string[] {
     }
     prev = token;
   }
-  ret.push(cur.join(" "));
-  return ret;
+  ac.push(cur.join(" "));
 }

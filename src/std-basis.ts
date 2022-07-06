@@ -68,7 +68,8 @@ function getInfo(name: string, $: CheerioAPI): Info {
   } else {
     let cur = $(synopsisHeader).next();
     assert(cur.length === 1 && cur.is("blockquote"));
-    const synopsis = breakSmlAcrossLines(getCleanText(cur));
+    const synopsis: string[] = [];
+    breakSmlAcrossLines(synopsis, getCleanText(cur));
     const fst = synopsis.shift();
     if (fst === undefined) {
       throw new Error("empty synopsis");
@@ -100,7 +101,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   } else {
     const elem = $(interfaceHeader).next();
     assert(elem.length === 1 && elem.is("blockquote"));
-    specs = breakSmlAcrossLines(getCleanText(elem));
+    breakSmlAcrossLines(specs, getCleanText(elem));
   }
   const descriptionHeader = headers.find(
     (x) => getCleanText($(x)) == "Description",
