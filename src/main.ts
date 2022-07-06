@@ -1,7 +1,8 @@
+import { get as smlNj } from "./sml-nj.js";
 import { get as stdBasis } from "./std-basis.js";
 
 async function main() {
-  await stdBasis();
+  await Promise.all([stdBasis(), smlNj()]);
 }
 
 main().catch((e) => {
