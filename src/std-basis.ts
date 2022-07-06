@@ -1,5 +1,5 @@
-import { Cheerio, load, type CheerioAPI, type Element } from "cheerio";
-import { access, mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { load, type CheerioAPI } from "cheerio";
+import { access, mkdir, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
 import type {
@@ -12,10 +12,14 @@ import type {
 } from "./types.js";
 import {
   assert,
+  breakSmlAcrossLines,
   emitComments,
+  getCleanText,
+  getFilesFromDir,
   getUrls,
   htmlOut,
   smlOut,
+  smlStarter,
   toText,
 } from "./util.js";
 
@@ -50,50 +54,6 @@ function processFiles(files: File[]): MergedInfoMap {
       extra: merged.extra,
     });
   }
-  return ret;
-}
-
-function getCleanText(x: Cheerio<Element>): string {
-  // \s includes regular space, non-breaking space, newline, and others
-  return x.text().trim().replaceAll(/\s+/g, " ");
-}
-
-const starter = new Set([
-  "type",
-  "eqtype",
-  "datatype",
-  "exception",
-  "val",
-  "structure",
-  "signature",
-  "functor",
-  "include",
-]);
-
-const precedesType = new Set(["where", "and", "sharing"]);
-
-function breakSmlAcrossLines(text: string): string[] {
-  const ret: string[] = [];
-  const tokens = text.split(" ");
-  let cur: string[] = [];
-  let prev: string | null = null;
-  for (const token of tokens) {
-    // hack to not split on things like 'where type'
-    if (
-      token === "end" ||
-      (starter.has(token) &&
-        (token !== "type" || prev === null || !precedesType.has(prev)))
-    ) {
-      if (cur.length !== 0) {
-        ret.push(cur.join(" "));
-      }
-      cur = [token];
-    } else {
-      cur.push(token);
-    }
-    prev = token;
-  }
-  ret.push(cur.join(" "));
   return ret;
 }
 
@@ -172,7 +132,9 @@ function getInfo(name: string, $: CheerioAPI): Info {
 }
 
 function getName(s: string): string {
-  const name = s.split(" ").find((x) => !starter.has(x) && !x.startsWith("'"));
+  const name = s
+    .split(" ")
+    .find((x) => !smlStarter.has(x) && !x.startsWith("'"));
   if (name === undefined) {
     throw new Error(`couldn't get name for: ${s}`);
   }
@@ -194,7 +156,7 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
     }
     if (def.items.length === 1) {
       let comment: string;
-      if (starter.has(fst.split(" ")[0])) {
+      if (smlStarter.has(fst.split(" ")[0])) {
         comment = def.comment;
       } else {
         comment = def.items[0] + " " + def.comment;
@@ -223,18 +185,6 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
     }
   }
   return { defs, extra: { unused: map, duplicate, usedMultiple } };
-}
-
-async function getFilesFromDir(): Promise<File[]> {
-  const fileNames = await readdir(path.join(rootDir, htmlOut));
-  return Promise.all(
-    fileNames.map((name) =>
-      readFile(path.join(rootDir, htmlOut, name)).then((text) => ({
-        name,
-        text: text.toString(),
-      })),
-    ),
-  );
 }
 
 const maxLineWidth = 100;
@@ -333,7 +283,7 @@ export async function get() {
   } catch {
     await fetchAndWriteFiles();
   }
-  const files = await getFilesFromDir();
+  const files = await getFilesFromDir(rootDir);
   const map = processFiles(files);
   await mkdir(path.join(rootDir, smlOut), { recursive: true });
   for (const [name, val] of map.entries()) {
