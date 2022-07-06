@@ -13,30 +13,22 @@ import type {
 import {
   assert,
   emitComments,
-  filterMap,
+  getUrls,
   htmlOut,
-  id,
   smlOut,
+  toText,
 } from "./util.js";
 
 const rootDir = "std-basis";
-
 const rootUrl = "https://smlfamily.github.io/Basis";
 
 async function fetchAndWriteFiles(): Promise<File[]> {
-  const resp = await fetch(`${rootUrl}/manpages.html`);
-  const $ = load(await resp.text());
-  const stdBasisUrls = filterMap(
-    id,
-    $("h4 a")
-      .toArray()
-      .map((x) => x.attribs["href"]),
-  );
+  const $ = load(await fetch(`${rootUrl}/manpages.html`).then(toText));
+  const stdBasisUrls = getUrls($("h4 a"));
   await mkdir(path.join(rootDir, htmlOut), { recursive: true });
   return Promise.all(
     stdBasisUrls.map(async (name) => {
-      const resp = await fetch(`${rootUrl}/${name}`);
-      const text = await resp.text();
+      const text = await fetch(`${rootUrl}/${name}`).then(toText);
       await writeFile(path.join(rootDir, htmlOut, name), text);
       return { name, text };
     }),

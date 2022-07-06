@@ -1,3 +1,6 @@
+import { Cheerio, type Element } from "cheerio";
+import { type Response } from "node-fetch";
+
 export const emitComments = false;
 export const htmlOut = "html";
 export const smlOut = "sml";
@@ -8,7 +11,7 @@ export function assert(x: boolean) {
   }
 }
 
-export function filterMap<T, U>(f: (x: T) => U | undefined, xs: T[]): U[] {
+function filterMap<T, U>(f: (x: T) => U | undefined, xs: T[]): U[] {
   const ret = [];
   for (const x of xs) {
     const res = f(x);
@@ -19,6 +22,17 @@ export function filterMap<T, U>(f: (x: T) => U | undefined, xs: T[]): U[] {
   return ret;
 }
 
-export function id<T>(x: T): T {
+function id<T>(x: T): T {
   return x;
+}
+
+export function getUrls(ch: Cheerio<Element>): string[] {
+  return filterMap(
+    id,
+    ch.toArray().map((x) => x.attribs["href"]),
+  );
+}
+
+export function toText(x: Response): Promise<string> {
+  return x.text();
 }
