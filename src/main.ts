@@ -9,6 +9,12 @@ async function main() {
       index: "manpages.html",
       linkSelector: "h4 a",
     }),
+    stdBasisLike({
+      dirName: "sml-of-nj",
+      rootUrl: "https://www.smlnj.org/doc/SMLofNJ/pages",
+      index: "index-all.html",
+      linkSelector: "a",
+    }),
     smlnjLib(),
   ]);
 }

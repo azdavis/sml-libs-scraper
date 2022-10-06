@@ -4,7 +4,7 @@ import { type Response } from "node-fetch";
 import path from "path";
 import { type File } from "./types.js";
 
-export const emitComments = false;
+export const emitComments = true;
 export const rootOut = "out";
 export const htmlOut = "html";
 export const smlOut = "sml";
