@@ -18,12 +18,13 @@ import {
   getFilesFromDir,
   getUrls,
   htmlOut,
+  rootOut,
   smlOut,
   smlStarter,
   toText,
 } from "./util.js";
 
-const rootDir = "std-basis";
+const rootDir = path.join(rootOut, "std-basis");
 const rootUrl = "https://smlfamily.github.io/Basis";
 
 async function fetchAndWriteFiles(): Promise<File[]> {

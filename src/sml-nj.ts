@@ -10,11 +10,12 @@ import {
   getFilesFromDir,
   getUrls,
   htmlOut,
+  rootOut,
   smlOut,
   toText,
 } from "./util.js";
 
-const rootDir = "sml-nj";
+const rootDir = path.join(rootOut, "sml-nj");
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
 async function fetchAndWriteFiles(): Promise<File[]> {

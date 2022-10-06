@@ -5,6 +5,7 @@ import path from "path";
 import { type File } from "./types.js";
 
 export const emitComments = false;
+export const rootOut = "out";
 export const htmlOut = "html";
 export const smlOut = "sml";
 
