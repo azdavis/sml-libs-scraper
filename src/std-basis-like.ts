@@ -33,7 +33,10 @@ export interface Args {
 
 async function fetchAndWriteFiles(args: Args): Promise<File[]> {
   const $ = load(await fetch(`${args.rootUrl}/${args.index}`).then(toText));
-  const stdBasisUrls = getUrls($(args.linkSelector));
+  // rm dupes and ignore hash
+  const stdBasisUrls = Array.from(
+    new Set(getUrls($(args.linkSelector)).map((x) => x.replace(/#.*/, ""))),
+  );
   await mkdir(path.join(rootOut, args.dirName, htmlOut), { recursive: true });
   return Promise.all(
     stdBasisUrls.map(async (name) => {
