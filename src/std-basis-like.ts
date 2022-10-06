@@ -279,7 +279,7 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   }
 }
 
-export async function get() {
+export async function stdBasis() {
   try {
     await access(path.join(rootDir, htmlOut));
   } catch {

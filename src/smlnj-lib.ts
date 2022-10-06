@@ -39,7 +39,7 @@ async function fetchAndWriteFiles(): Promise<File[]> {
   return compact((await Promise.all(xs)).flat());
 }
 
-export async function get() {
+export async function smlnjLib() {
   try {
     await access(path.join(rootDir, htmlOut));
   } catch {
