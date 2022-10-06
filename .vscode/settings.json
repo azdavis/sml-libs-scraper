@@ -2,5 +2,6 @@
   "files.exclude": {
     "node_modules": true,
     "out": true
-  }
+  },
+  "millet.server.enable": false
 }
