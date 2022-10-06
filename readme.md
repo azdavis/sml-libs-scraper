@@ -1,6 +1,11 @@
 # SML Basis
 
-Parsing the generated [Standard ML Basis][basis] and [SML/NJ Library][smlnj] documentation and generating various things from it, like SML files.
+Parsing the generated
+
+- [Standard ML Basis][basis]
+- [SML/NJ Library][smlnj-lib]
+
+library documentation and generating various things from them, like SML files.
 
 [basis]: https://smlfamily.github.io/Basis
-[smlnj]: https://www.smlnj.org/doc/smlnj-lib/index.html
+[smlnj-lib]: https://www.smlnj.org/doc/SMLofNJ/pages/index-all.html
