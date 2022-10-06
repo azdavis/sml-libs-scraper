@@ -15,7 +15,7 @@ import {
   toText,
 } from "./util.js";
 
-const rootDir = path.join(rootOut, "sml-nj");
+const rootDir = path.join(rootOut, "smlnj-lib");
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
 async function fetchAndWriteFiles(): Promise<File[]> {
