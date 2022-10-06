@@ -1,4 +1,4 @@
-import { load, type CheerioAPI } from "cheerio";
+import { load, type CheerioAPI, type SelectorType } from "cheerio";
 import { access, mkdir, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
@@ -24,17 +24,21 @@ import {
   toText,
 } from "./util.js";
 
-const rootDir = path.join(rootOut, "std-basis");
-const rootUrl = "https://smlfamily.github.io/Basis";
+export interface Args {
+  dirName: string;
+  rootUrl: string;
+  index: string;
+  linkSelector: SelectorType;
+}
 
-async function fetchAndWriteFiles(): Promise<File[]> {
-  const $ = load(await fetch(`${rootUrl}/manpages.html`).then(toText));
-  const stdBasisUrls = getUrls($("h4 a"));
-  await mkdir(path.join(rootDir, htmlOut), { recursive: true });
+async function fetchAndWriteFiles(args: Args): Promise<File[]> {
+  const $ = load(await fetch(`${args.rootUrl}/${args.index}`).then(toText));
+  const stdBasisUrls = getUrls($(args.linkSelector));
+  await mkdir(path.join(rootOut, args.dirName, htmlOut), { recursive: true });
   return Promise.all(
     stdBasisUrls.map(async (name) => {
-      const text = await fetch(`${rootUrl}/${name}`).then(toText);
-      await writeFile(path.join(rootDir, htmlOut, name), text);
+      const text = await fetch(`${args.rootUrl}/${name}`).then(toText);
+      await writeFile(path.join(rootOut, args.dirName, htmlOut, name), text);
       return { name, text };
     }),
   );
@@ -279,20 +283,20 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   }
 }
 
-export async function stdBasis() {
+export async function stdBasisLike(args: Args) {
   try {
-    await access(path.join(rootDir, htmlOut));
+    await access(path.join(rootOut, args.dirName, htmlOut));
   } catch {
-    await fetchAndWriteFiles();
+    await fetchAndWriteFiles(args);
   }
-  const files = await getFilesFromDir(rootDir);
+  const files = await getFilesFromDir(path.join(rootOut, args.dirName));
   const map = processFiles(files);
-  await mkdir(path.join(rootDir, smlOut), { recursive: true });
+  await mkdir(path.join(rootOut, args.dirName, smlOut), { recursive: true });
   for (const [name, val] of map.entries()) {
     let lines: string[] = [];
     mkSmlFile(lines, name, val);
     await writeFile(
-      path.join(rootDir, smlOut, name + ".sml"),
+      path.join(rootOut, args.dirName, smlOut, name + ".sml"),
       lines.join("\n"),
     );
   }
