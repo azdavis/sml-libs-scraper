@@ -22,6 +22,7 @@ import {
   smlOut,
   smlStarter,
   toText,
+  writeHtmlFiles,
 } from "./util.js";
 
 export interface Args {
@@ -31,19 +32,18 @@ export interface Args {
   linkSelector: SelectorType;
 }
 
-async function fetchAndWriteFiles(args: Args): Promise<File[]> {
+async function fetchAndWriteFiles(args: Args) {
   const $ = load(await fetch(`${args.rootUrl}/${args.index}`).then(toText));
   // rm dupes and ignore hash
   const urls = Array.from(
     new Set(getUrls($(args.linkSelector)).map((x) => x.replace(/#.*/, ""))),
   );
-  await mkdir(path.join(rootOut, args.dirName, htmlOut), { recursive: true });
-  const ps = urls.map(async (name) => {
+  const map = new Map<string, string>();
+  for (const name of urls) {
     const text = await fetch(`${args.rootUrl}/${name}`).then(toText);
-    await writeFile(path.join(rootOut, args.dirName, htmlOut, name), text);
-    return { name, text };
-  });
-  return Promise.all(ps);
+    map.set(name, text);
+  }
+  await writeHtmlFiles(args.dirName, map);
 }
 
 function processFiles(files: File[]): MergedInfoMap {

@@ -2,10 +2,8 @@ import { load } from "cheerio";
 import { access, mkdir, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
-import type { File } from "./types.js";
 import {
   breakSmlAcrossLines,
-  compact,
   getCleanText,
   getFilesFromDir,
   getUrls,
@@ -13,33 +11,32 @@ import {
   rootOut,
   smlOut,
   toText,
+  writeHtmlFiles,
 } from "./util.js";
 
-const rootDir = path.join(rootOut, "smlnj-lib");
+const libName = "smlnj-lib";
+const rootDir = path.join(rootOut, libName);
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
-async function fetchAndWriteFiles(): Promise<File[]> {
+async function fetchAndWriteFiles() {
   const $ = load(await fetch(rootUrl).then(toText));
   // rm dupes and ignore hash
-  const urls = Array.from(
-    new Set(getUrls($("#toc a")).map((x) => x.replace(/#.*/, ""))),
+  const dirUrls = new Set(
+    getUrls($("#toc a")).map((x) => x.replace(/#.*/, "")),
   );
-  await mkdir(path.join(rootDir, htmlOut), { recursive: true });
-  const ps = urls.map(async (url) => {
-    const $ = load(await fetch(`${rootUrl}/${url}`).then(toText));
-    const dir = path.dirname(url);
-    return Promise.all(
-      getUrls($("dt a")).map(async (name) => {
-        if (name.includes("#")) {
-          return undefined;
-        }
-        const text = await fetch(`${rootUrl}/${dir}/${name}`).then(toText);
-        await writeFile(path.join(rootDir, htmlOut, name), text);
-        return { name, text };
-      }),
-    );
-  });
-  return compact((await Promise.all(ps)).flat());
+  const map = new Map<string, string>();
+  for (const dirUrl of dirUrls) {
+    const $ = load(await fetch(`${rootUrl}/${dirUrl}`).then(toText));
+    const dir = path.dirname(dirUrl);
+    for (const name of getUrls($("dt a"))) {
+      if (name.includes("#")) {
+        continue;
+      }
+      const text = await fetch(`${rootUrl}/${dir}/${name}`).then(toText);
+      map.set(name, text);
+    }
+  }
+  await writeHtmlFiles(libName, map);
 }
 
 export async function smlnjLib() {

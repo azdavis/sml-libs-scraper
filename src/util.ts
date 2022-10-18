@@ -1,5 +1,5 @@
-import { Cheerio, type Element } from "cheerio";
-import { readdir, readFile } from "fs/promises";
+import { type Cheerio, type Element } from "cheerio";
+import { mkdir, readdir, readFile, writeFile } from "fs/promises";
 import { type Response } from "node-fetch";
 import path from "path";
 import { type File } from "./types.js";
@@ -94,4 +94,16 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
     prev = token;
   }
   ac.push(cur.join(" "));
+}
+
+export async function writeHtmlFiles(
+  libName: string,
+  files: Map<string, string>,
+) {
+  await mkdir(path.join(rootOut, libName, htmlOut), { recursive: true });
+  const ps = Array.from(files.entries()).map(async ([name, text]) => {
+    const p = path.join(rootOut, libName, htmlOut, name);
+    await writeFile(p, text);
+  });
+  await Promise.all(ps);
 }
