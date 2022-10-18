@@ -1,6 +1,5 @@
 import { load, type CheerioAPI, type SelectorType } from "cheerio";
 import { access, mkdir, writeFile } from "fs/promises";
-import fetch from "node-fetch";
 import path from "path";
 import type {
   File,
@@ -14,6 +13,7 @@ import {
   assert,
   breakSmlAcrossLines,
   emitComments,
+  fetchText,
   getCleanText,
   getUrls,
   htmlOut,
@@ -21,7 +21,6 @@ import {
   rootOut,
   smlOut,
   smlStarter,
-  toText,
   writeHtmlFiles,
 } from "./util.js";
 
@@ -33,14 +32,14 @@ export interface Args {
 }
 
 async function fetchAndWriteFiles(args: Args) {
-  const $ = load(await fetch(`${args.rootUrl}/${args.index}`).then(toText));
+  const $ = load(await fetchText(`${args.rootUrl}/${args.index}`));
   // rm dupes and ignore hash
   const urls = Array.from(
     new Set(getUrls($(args.linkSelector)).map((x) => x.replace(/#.*/, ""))),
   );
   const map = new Map<string, string>();
   for (const name of urls) {
-    const text = await fetch(`${args.rootUrl}/${name}`).then(toText);
+    const text = await fetchText(`${args.rootUrl}/${name}`);
     map.set(name, text);
   }
   await writeHtmlFiles(args.libName, map);

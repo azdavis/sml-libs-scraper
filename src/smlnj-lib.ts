@@ -1,16 +1,15 @@
 import { load } from "cheerio";
 import { access, mkdir, writeFile } from "fs/promises";
-import fetch from "node-fetch";
 import path from "path";
 import {
   breakSmlAcrossLines,
+  fetchText,
   getCleanText,
   getUrls,
   htmlOut,
   readHtmlFiles,
   rootOut,
   smlOut,
-  toText,
   writeHtmlFiles,
 } from "./util.js";
 
@@ -18,20 +17,20 @@ const libName = "smlnj-lib";
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
 async function fetchAndWriteFiles() {
-  const $ = load(await fetch(rootUrl).then(toText));
+  const $ = load(await fetchText(rootUrl));
   // rm dupes and ignore hash
   const dirUrls = new Set(
     getUrls($("#toc a")).map((x) => x.replace(/#.*/, "")),
   );
   const map = new Map<string, string>();
   for (const dirUrl of dirUrls) {
-    const $ = load(await fetch(`${rootUrl}/${dirUrl}`).then(toText));
+    const $ = load(await fetchText(`${rootUrl}/${dirUrl}`));
     const dir = path.dirname(dirUrl);
     for (const name of getUrls($("dt a"))) {
       if (name.includes("#")) {
         continue;
       }
-      const text = await fetch(`${rootUrl}/${dir}/${name}`).then(toText);
+      const text = await fetchText(`${rootUrl}/${dir}/${name}`);
       map.set(name, text);
     }
   }

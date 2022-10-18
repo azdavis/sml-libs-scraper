@@ -1,6 +1,5 @@
 import { type Cheerio, type Element } from "cheerio";
 import { mkdir, readdir, readFile, writeFile } from "fs/promises";
-import { type Response } from "node-fetch";
 import path from "path";
 import { type File } from "./types.js";
 
@@ -38,8 +37,9 @@ export function getUrls(ch: Cheerio<Element>): string[] {
   return compact(ch.toArray().map((x) => x.attribs["href"]));
 }
 
-export function toText(x: Response): Promise<string> {
-  return x.text();
+export async function fetchText(x: string): Promise<string> {
+  const res = await fetch(x);
+  return res.text();
 }
 
 export async function readHtmlFiles(libName: string): Promise<File[]> {
