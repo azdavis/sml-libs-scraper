@@ -5,9 +5,6 @@ import path from "path";
 import type { File } from "./types";
 
 export const emitComments = true;
-const rootOut = "out";
-const htmlOut = "html";
-const smlOut = "sml";
 
 export function assert(x: boolean) {
   if (!x) {
@@ -15,23 +12,14 @@ export function assert(x: boolean) {
   }
 }
 
-function filterMap<T, U>(f: (x: T) => U | undefined, xs: T[]): U[] {
+function compact<T>(xs: (T | undefined)[]): T[] {
   const ret = [];
   for (const x of xs) {
-    const res = f(x);
-    if (res !== undefined) {
-      ret.push(res);
+    if (x !== undefined) {
+      ret.push(x);
     }
   }
   return ret;
-}
-
-function id<T>(x: T): T {
-  return x;
-}
-
-function compact<T>(xs: (T | undefined)[]): T[] {
-  return filterMap(id, xs);
 }
 
 export function getUrls(ch: Cheerio<Element>): string[] {
@@ -43,9 +31,10 @@ export async function fetchText(x: string): Promise<string> {
   return res.text();
 }
 
+// \s includes regular space, non-breaking space, newline, and others
+const manySpace = /\s+/g;
 export function getCleanText(x: Cheerio<Element>): string {
-  // \s includes regular space, non-breaking space, newline, and others
-  return x.text().trim().replaceAll(/\s+/g, " ");
+  return x.text().trim().replaceAll(manySpace, " ");
 }
 
 export const smlStarter = new Set([
@@ -85,7 +74,10 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
   ac.push(cur.join(" "));
 }
 
-const HTML_END = /\.html$/;
+const htmlEnd = /\.html$/;
+const outDir = "out";
+const htmlDir = "html";
+const smlDir = "sml";
 
 /**
  * writes the html files if needed, loads them, and makes the sml out dir.
@@ -96,28 +88,28 @@ export async function prepare(
   getFiles: () => Promise<Map<string, string>>,
 ): Promise<File[]> {
   try {
-    await access(path.join(rootOut, libName, htmlOut));
+    await access(path.join(outDir, libName, htmlDir));
   } catch {
     const files = await getFiles();
-    await mkdir(path.join(rootOut, libName, htmlOut), { recursive: true });
+    await mkdir(path.join(outDir, libName, htmlDir), { recursive: true });
     const ps = Array.from(files.entries()).map(([name, text]) => {
-      const p = path.join(rootOut, libName, htmlOut, name);
+      const p = path.join(outDir, libName, htmlDir, name);
       return writeFile(p, text);
     });
     await Promise.all(ps);
   }
-  const fileNames = await readdir(path.join(rootOut, libName, htmlOut));
+  const fileNames = await readdir(path.join(outDir, libName, htmlDir));
   const ps = fileNames.map(async (name) => {
-    const buf = await readFile(path.join(rootOut, libName, htmlOut, name));
-    return { name: name.replace(HTML_END, ""), text: buf.toString() };
+    const buf = await readFile(path.join(outDir, libName, htmlDir, name));
+    return { name: name.replace(htmlEnd, ""), text: buf.toString() };
   });
   return Promise.all(ps);
 }
 
 export async function writeSmlFiles(libName: string, files: File[]) {
-  await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
+  await mkdir(path.join(outDir, libName, smlDir), { recursive: true });
   const ps = files.map(({ name, text }) => {
-    const p = path.join(rootOut, libName, smlOut, name + ".sml");
+    const p = path.join(outDir, libName, smlDir, name + ".sml");
     return writeFile(p, text);
   });
   await Promise.all(ps);
