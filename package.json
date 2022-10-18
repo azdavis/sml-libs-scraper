@@ -5,7 +5,7 @@
   "type": "module",
   "main": "out/main.js",
   "scripts": {
-    "it": "npm run build && node build/main.js",
+    "go": "npm run build && node build/main.js",
     "build": "tsc"
   },
   "devDependencies": {
