@@ -1,5 +1,4 @@
 import { load } from "cheerio";
-import { writeFile } from "fs/promises";
 import path from "path";
 import {
   breakSmlAcrossLines,
@@ -7,8 +6,7 @@ import {
   getCleanText,
   getUrls,
   prepare,
-  rootOut,
-  smlOut,
+  writeSmlFiles,
 } from "./util.js";
 
 const libName = "smlnj-lib";
@@ -37,15 +35,13 @@ async function getFiles(): Promise<Map<string, string>> {
 
 export async function smlnjLib() {
   const files = await prepare(libName, getFiles);
-  const ps = files.map(async ({ name, text }) => {
+  const newFiles = files.map(({ name, text }) => {
     const $ = load(text);
     const lines: string[] = ["(* synopsis *)"];
     breakSmlAcrossLines(lines, getCleanText($("#_synopsis").next()));
     lines.push("(* interface *)");
     breakSmlAcrossLines(lines, getCleanText($("#_interface").next()));
-    const smlBaseName = path.basename(name).replace(/\.html$/, ".sml");
-    const out = path.join(rootOut, libName, smlOut, smlBaseName);
-    await writeFile(out, lines.join("\n"));
+    return { name, text: lines.join("\n") };
   });
-  await Promise.all(ps);
+  await writeSmlFiles(libName, newFiles);
 }

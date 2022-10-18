@@ -85,6 +85,8 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
   ac.push(cur.join(" "));
 }
 
+const HTML_END = /\.html$/;
+
 /**
  * writes the html files if needed, loads them, and makes the sml out dir.
  * returns the loaded files.
@@ -98,17 +100,25 @@ export async function prepare(
   } catch {
     const files = await getFiles();
     await mkdir(path.join(rootOut, libName, htmlOut), { recursive: true });
-    const ps = Array.from(files.entries()).map(async ([name, text]) => {
+    const ps = Array.from(files.entries()).map(([name, text]) => {
       const p = path.join(rootOut, libName, htmlOut, name);
-      await writeFile(p, text);
+      return writeFile(p, text);
     });
     await Promise.all(ps);
   }
   const fileNames = await readdir(path.join(rootOut, libName, htmlOut));
   const ps = fileNames.map(async (name) => {
     const buf = await readFile(path.join(rootOut, libName, htmlOut, name));
-    return { name, text: buf.toString() };
+    return { name: name.replace(HTML_END, ""), text: buf.toString() };
   });
-  await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
   return Promise.all(ps);
+}
+
+export async function writeSmlFiles(libName: string, files: File[]) {
+  await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
+  const ps = files.map(({ name, text }) => {
+    const p = path.join(rootOut, libName, smlOut, name + ".sml");
+    return writeFile(p, text);
+  });
+  await Promise.all(ps);
 }

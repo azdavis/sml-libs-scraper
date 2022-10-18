@@ -1,6 +1,4 @@
 import { load, type CheerioAPI, type SelectorType } from "cheerio";
-import { writeFile } from "fs/promises";
-import path from "path";
 import type {
   File,
   Info,
@@ -17,9 +15,8 @@ import {
   getCleanText,
   getUrls,
   prepare,
-  rootOut,
-  smlOut,
   smlStarter,
+  writeSmlFiles,
 } from "./util.js";
 
 export interface Args {
@@ -46,11 +43,10 @@ async function getFiles(args: Args): Promise<Map<string, string>> {
 function processFiles(files: File[]): MergedInfoMap {
   const ret: MergedInfoMap = new Map();
   for (const file of files) {
-    const name = file.name.replace(/\.html$/, "");
-    assert(!ret.has(name));
+    assert(!ret.has(file.name));
     const info = getInfo(file.name, load(file.text));
     const merged = mergeDecsAndDefs(info.specs, info.defs);
-    ret.set(name, {
+    ret.set(file.name, {
       signatureName: info.signatureName,
       otherNames: info.otherNames,
       comment: info.comment,
@@ -285,11 +281,10 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
 export async function stdBasisLike(args: Args) {
   const files = await prepare(args.libName, () => getFiles(args));
   const processed = Array.from(processFiles(files).entries());
-  const ps = processed.map(async ([name, val]) => {
+  const newFiles = processed.map(([name, val]) => {
     let lines: string[] = [];
     mkSmlFile(lines, name, val);
-    const out = path.join(rootOut, args.libName, smlOut, name + ".sml");
-    await writeFile(out, lines.join("\n"));
+    return { name, text: lines.join("\n") };
   });
-  await Promise.all(ps);
+  writeSmlFiles(args.libName, newFiles);
 }
