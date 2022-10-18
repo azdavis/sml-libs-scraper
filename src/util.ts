@@ -105,12 +105,10 @@ export async function prepare(
     await Promise.all(ps);
   }
   const fileNames = await readdir(path.join(rootOut, libName, htmlOut));
-  const ps = fileNames.map((name) =>
-    readFile(path.join(rootOut, libName, htmlOut, name)).then((text) => ({
-      name,
-      text: text.toString(),
-    })),
-  );
+  const ps = fileNames.map(async (name) => {
+    const buf = await readFile(path.join(rootOut, libName, htmlOut, name));
+    return { name, text: buf.toString() };
+  });
   await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
   return Promise.all(ps);
 }
