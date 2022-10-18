@@ -20,9 +20,12 @@ const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
 async function fetchAndWriteFiles(): Promise<File[]> {
   const $ = load(await fetch(rootUrl).then(toText));
-  const smlnjLibraryUrls = getUrls($("#toc a"));
+  // rm dupes and ignore hash
+  const urls = Array.from(
+    new Set(getUrls($("#toc a")).map((x) => x.replace(/#.*/, ""))),
+  );
   await mkdir(path.join(rootDir, htmlOut), { recursive: true });
-  const xs = smlnjLibraryUrls.map(async (url) => {
+  const ps = urls.map(async (url) => {
     const $ = load(await fetch(`${rootUrl}/${url}`).then(toText));
     const dir = path.dirname(url);
     return Promise.all(
@@ -36,7 +39,7 @@ async function fetchAndWriteFiles(): Promise<File[]> {
       }),
     );
   });
-  return compact((await Promise.all(xs)).flat());
+  return compact((await Promise.all(ps)).flat());
 }
 
 export async function smlnjLib() {
@@ -53,8 +56,9 @@ export async function smlnjLib() {
     breakSmlAcrossLines(lines, getCleanText($("#_synopsis").next()));
     lines.push("(* interface *)");
     breakSmlAcrossLines(lines, getCleanText($("#_interface").next()));
-    const smlName = path.basename(name).replace(/\.html$/, ".sml");
-    await writeFile(path.join(rootDir, smlOut, smlName), lines.join("\n"));
+    const smlBaseName = path.basename(name).replace(/\.html$/, ".sml");
+    const out = path.join(rootDir, smlOut, smlBaseName);
+    await writeFile(out, lines.join("\n"));
   });
   await Promise.all(ps);
 }

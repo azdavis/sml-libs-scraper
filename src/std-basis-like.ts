@@ -34,17 +34,16 @@ export interface Args {
 async function fetchAndWriteFiles(args: Args): Promise<File[]> {
   const $ = load(await fetch(`${args.rootUrl}/${args.index}`).then(toText));
   // rm dupes and ignore hash
-  const stdBasisUrls = Array.from(
+  const urls = Array.from(
     new Set(getUrls($(args.linkSelector)).map((x) => x.replace(/#.*/, ""))),
   );
   await mkdir(path.join(rootOut, args.dirName, htmlOut), { recursive: true });
-  return Promise.all(
-    stdBasisUrls.map(async (name) => {
-      const text = await fetch(`${args.rootUrl}/${name}`).then(toText);
-      await writeFile(path.join(rootOut, args.dirName, htmlOut, name), text);
-      return { name, text };
-    }),
-  );
+  const ps = urls.map(async (name) => {
+    const text = await fetch(`${args.rootUrl}/${name}`).then(toText);
+    await writeFile(path.join(rootOut, args.dirName, htmlOut, name), text);
+    return { name, text };
+  });
+  return Promise.all(ps);
 }
 
 function processFiles(files: File[]): MergedInfoMap {
@@ -294,14 +293,12 @@ export async function stdBasisLike(args: Args) {
   }
   const files = await getFilesFromDir(path.join(rootOut, args.dirName));
   await mkdir(path.join(rootOut, args.dirName, smlOut), { recursive: true });
-  const map = processFiles(files);
-  const ps = Array.from(map.entries()).map(async ([name, val]) => {
+  const processed = Array.from(processFiles(files).entries());
+  const ps = processed.map(async ([name, val]) => {
     let lines: string[] = [];
     mkSmlFile(lines, name, val);
-    await writeFile(
-      path.join(rootOut, args.dirName, smlOut, name + ".sml"),
-      lines.join("\n"),
-    );
+    const out = path.join(rootOut, args.dirName, smlOut, name + ".sml");
+    await writeFile(out, lines.join("\n"));
   });
   await Promise.all(ps);
 }
