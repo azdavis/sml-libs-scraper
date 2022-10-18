@@ -26,7 +26,7 @@ import {
 } from "./util.js";
 
 export interface Args {
-  dirName: string;
+  libName: string;
   rootUrl: string;
   index: string;
   linkSelector: SelectorType;
@@ -43,7 +43,7 @@ async function fetchAndWriteFiles(args: Args) {
     const text = await fetch(`${args.rootUrl}/${name}`).then(toText);
     map.set(name, text);
   }
-  await writeHtmlFiles(args.dirName, map);
+  await writeHtmlFiles(args.libName, map);
 }
 
 function processFiles(files: File[]): MergedInfoMap {
@@ -287,17 +287,17 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
 
 export async function stdBasisLike(args: Args) {
   try {
-    await access(path.join(rootOut, args.dirName, htmlOut));
+    await access(path.join(rootOut, args.libName, htmlOut));
   } catch {
     await fetchAndWriteFiles(args);
   }
-  const files = await readHtmlFiles(path.join(rootOut, args.dirName));
-  await mkdir(path.join(rootOut, args.dirName, smlOut), { recursive: true });
+  const files = await readHtmlFiles(path.join(rootOut, args.libName));
+  await mkdir(path.join(rootOut, args.libName, smlOut), { recursive: true });
   const processed = Array.from(processFiles(files).entries());
   const ps = processed.map(async ([name, val]) => {
     let lines: string[] = [];
     mkSmlFile(lines, name, val);
-    const out = path.join(rootOut, args.dirName, smlOut, name + ".sml");
+    const out = path.join(rootOut, args.libName, smlOut, name + ".sml");
     await writeFile(out, lines.join("\n"));
   });
   await Promise.all(ps);

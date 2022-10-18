@@ -4,13 +4,13 @@ import { stdBasisLike } from "./std-basis-like.js";
 async function main() {
   await Promise.all([
     stdBasisLike({
-      dirName: "std-basis",
+      libName: "std-basis",
       rootUrl: "https://smlfamily.github.io/Basis",
       index: "manpages.html",
       linkSelector: "h4 a",
     }),
     stdBasisLike({
-      dirName: "sml-of-nj",
+      libName: "sml-of-nj",
       rootUrl: "https://www.smlnj.org/doc/SMLofNJ/pages",
       index: "index-all.html",
       linkSelector: "a",
