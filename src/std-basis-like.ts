@@ -15,9 +15,9 @@ import {
   breakSmlAcrossLines,
   emitComments,
   getCleanText,
-  getFilesFromDir,
   getUrls,
   htmlOut,
+  readHtmlFiles,
   rootOut,
   smlOut,
   smlStarter,
@@ -291,7 +291,7 @@ export async function stdBasisLike(args: Args) {
   } catch {
     await fetchAndWriteFiles(args);
   }
-  const files = await getFilesFromDir(path.join(rootOut, args.dirName));
+  const files = await readHtmlFiles(path.join(rootOut, args.dirName));
   await mkdir(path.join(rootOut, args.dirName, smlOut), { recursive: true });
   const processed = Array.from(processFiles(files).entries());
   const ps = processed.map(async ([name, val]) => {

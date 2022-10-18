@@ -42,7 +42,7 @@ export function toText(x: Response): Promise<string> {
   return x.text();
 }
 
-export async function getFilesFromDir(rootDir: string): Promise<File[]> {
+export async function readHtmlFiles(rootDir: string): Promise<File[]> {
   const fileNames = await readdir(path.join(rootDir, htmlOut));
   return Promise.all(
     fileNames.map((name) =>

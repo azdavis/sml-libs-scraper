@@ -5,9 +5,9 @@ import path from "path";
 import {
   breakSmlAcrossLines,
   getCleanText,
-  getFilesFromDir,
   getUrls,
   htmlOut,
+  readHtmlFiles,
   rootOut,
   smlOut,
   toText,
@@ -45,7 +45,7 @@ export async function smlnjLib() {
   } catch {
     await fetchAndWriteFiles();
   }
-  const files = await getFilesFromDir(rootDir);
+  const files = await readHtmlFiles(rootDir);
   await mkdir(path.join(rootDir, smlOut), { recursive: true });
   const ps = files.map(async ({ name, text }) => {
     const $ = load(text);
