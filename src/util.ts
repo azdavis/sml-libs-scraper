@@ -104,7 +104,10 @@ export async function readHtmlFiles(
     const files = await getFiles();
     await mkdir(path.join(outDir, libName, htmlDir), { recursive: true });
     const ps = files.map(({ name, text }) => {
-      const p = path.join(outDir, libName, htmlDir, name);
+      // name may or may not have a html suffix already, but this definitely
+      // will have exactly one html suffix.
+      const nameWithHtmlExt = name.replace(htmlEnd, "") + ".html";
+      const p = path.join(outDir, libName, htmlDir, nameWithHtmlExt);
       return writeFile(p, text);
     });
     await Promise.all(ps);
