@@ -40,8 +40,11 @@ export async function fetchText(x: string): Promise<string> {
   return res.text();
 }
 
-// \s includes regular space, non-breaking space, newline, and others
 const manySpace = /\s+/g;
+
+/**
+ * compresses many whitespace (space, newline, etc) into one
+ */
 export function getCleanText(x: Cheerio<Element>): string {
   return x.text().trim().replaceAll(manySpace, " ");
 }

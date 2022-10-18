@@ -1,3 +1,4 @@
+import { mlton } from "./mlton.js";
 import { smlnjLib } from "./smlnj-lib.js";
 import { stdBasisLike } from "./std-basis-like.js";
 
@@ -16,6 +17,7 @@ async function main() {
       linkSelector: "a",
     }),
     smlnjLib(),
+    mlton(),
   ]);
 }
 

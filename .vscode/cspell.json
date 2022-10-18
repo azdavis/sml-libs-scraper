@@ -2,6 +2,8 @@
   "version": "0.2",
   "words": [
     "eqtype",
-    "manpages"
+    "listingblock",
+    "manpages",
+    "mlton"
   ]
 }
