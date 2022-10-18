@@ -1,12 +1,12 @@
 import { load } from "cheerio";
-import { mkdir, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import path from "path";
 import {
   breakSmlAcrossLines,
   fetchText,
   getCleanText,
-  getHtmlFilesCached,
   getUrls,
+  prepare,
   rootOut,
   smlOut,
 } from "./util.js";
@@ -36,8 +36,7 @@ async function getFiles(): Promise<Map<string, string>> {
 }
 
 export async function smlnjLib() {
-  const files = await getHtmlFilesCached(libName, getFiles);
-  await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
+  const files = await prepare(libName, getFiles);
   const ps = files.map(async ({ name, text }) => {
     const $ = load(text);
     const lines: string[] = ["(* synopsis *)"];

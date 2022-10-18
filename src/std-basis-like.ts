@@ -1,5 +1,5 @@
 import { load, type CheerioAPI, type SelectorType } from "cheerio";
-import { mkdir, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import path from "path";
 import type {
   File,
@@ -15,8 +15,8 @@ import {
   emitComments,
   fetchText,
   getCleanText,
-  getHtmlFilesCached,
   getUrls,
+  prepare,
   rootOut,
   smlOut,
   smlStarter,
@@ -283,8 +283,7 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
 }
 
 export async function stdBasisLike(args: Args) {
-  const files = await getHtmlFilesCached(args.libName, () => getFiles(args));
-  await mkdir(path.join(rootOut, args.libName, smlOut), { recursive: true });
+  const files = await prepare(args.libName, () => getFiles(args));
   const processed = Array.from(processFiles(files).entries());
   const ps = processed.map(async ([name, val]) => {
     let lines: string[] = [];

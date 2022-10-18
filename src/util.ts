@@ -85,7 +85,11 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
   ac.push(cur.join(" "));
 }
 
-export async function getHtmlFilesCached(
+/**
+ * writes the html files if needed, loads them, and makes the sml out dir.
+ * returns the loaded files.
+ */
+export async function prepare(
   libName: string,
   getFiles: () => Promise<Map<string, string>>,
 ): Promise<File[]> {
@@ -107,5 +111,6 @@ export async function getHtmlFilesCached(
       text: text.toString(),
     })),
   );
+  await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
   return Promise.all(ps);
 }
