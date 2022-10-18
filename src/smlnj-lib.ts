@@ -11,7 +11,7 @@ import {
 } from "./util.js";
 
 const libName = "smlnj-lib";
-const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
+const rootUrl = "https://www.smlnj.org/doc/smlnj-lib";
 
 async function getFiles(): Promise<Map<string, string>> {
   const $ = load(await fetchText(rootUrl));
