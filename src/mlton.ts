@@ -36,7 +36,6 @@ export async function mlton() {
   const newFiles = files.map(({ name, text }) => {
     const $ = load(text);
     const code = getCleanText($(".listingblock").first());
-    console.log({ name, text, code });
     const lines: string[] = [];
     breakSmlAcrossLines(lines, code);
     return { name, text: lines.join("\n") };
