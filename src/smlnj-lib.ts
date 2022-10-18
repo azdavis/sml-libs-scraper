@@ -15,7 +15,6 @@ import {
 } from "./util.js";
 
 const libName = "smlnj-lib";
-const rootDir = path.join(rootOut, libName);
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
 async function fetchAndWriteFiles() {
@@ -41,12 +40,12 @@ async function fetchAndWriteFiles() {
 
 export async function smlnjLib() {
   try {
-    await access(path.join(rootDir, htmlOut));
+    await access(path.join(rootOut, libName, htmlOut));
   } catch {
     await fetchAndWriteFiles();
   }
-  const files = await readHtmlFiles(rootDir);
-  await mkdir(path.join(rootDir, smlOut), { recursive: true });
+  const files = await readHtmlFiles(libName);
+  await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
   const ps = files.map(async ({ name, text }) => {
     const $ = load(text);
     const lines: string[] = ["(* synopsis *)"];
@@ -54,7 +53,7 @@ export async function smlnjLib() {
     lines.push("(* interface *)");
     breakSmlAcrossLines(lines, getCleanText($("#_interface").next()));
     const smlBaseName = path.basename(name).replace(/\.html$/, ".sml");
-    const out = path.join(rootDir, smlOut, smlBaseName);
+    const out = path.join(rootOut, libName, smlOut, smlBaseName);
     await writeFile(out, lines.join("\n"));
   });
   await Promise.all(ps);

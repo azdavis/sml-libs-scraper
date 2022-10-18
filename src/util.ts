@@ -42,11 +42,11 @@ export function toText(x: Response): Promise<string> {
   return x.text();
 }
 
-export async function readHtmlFiles(rootDir: string): Promise<File[]> {
-  const fileNames = await readdir(path.join(rootDir, htmlOut));
+export async function readHtmlFiles(libName: string): Promise<File[]> {
+  const fileNames = await readdir(path.join(rootOut, libName, htmlOut));
   return Promise.all(
     fileNames.map((name) =>
-      readFile(path.join(rootDir, htmlOut, name)).then((text) => ({
+      readFile(path.join(rootOut, libName, htmlOut, name)).then((text) => ({
         name,
         text: text.toString(),
       })),

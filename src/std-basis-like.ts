@@ -291,7 +291,7 @@ export async function stdBasisLike(args: Args) {
   } catch {
     await fetchAndWriteFiles(args);
   }
-  const files = await readHtmlFiles(path.join(rootOut, args.libName));
+  const files = await readHtmlFiles(args.libName);
   await mkdir(path.join(rootOut, args.libName, smlOut), { recursive: true });
   const processed = Array.from(processFiles(files).entries());
   const ps = processed.map(async ([name, val]) => {
