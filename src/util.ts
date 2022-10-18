@@ -89,10 +89,9 @@ const htmlDir = "html";
 const smlDir = "sml";
 
 /**
- * writes the html files if needed, loads them, and makes the sml out dir.
- * returns the loaded files.
+ * writes the html files to the fs if needed, then reads and returns them.
  */
-export async function prepare(
+export async function readHtmlFiles(
   libName: string,
   getFiles: () => Promise<Map<string, string>>,
 ): Promise<File[]> {

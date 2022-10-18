@@ -14,7 +14,7 @@ import {
   fetchText,
   getCleanText,
   getNoDupeNoHashUrls,
-  prepare,
+  readHtmlFiles,
   smlStarter,
   writeSmlFiles,
 } from "./util.js";
@@ -276,7 +276,7 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
 }
 
 export async function stdBasisLike(args: Args) {
-  const files = await prepare(args.libName, () => getFiles(args));
+  const files = await readHtmlFiles(args.libName, () => getFiles(args));
   const processed = Array.from(processFiles(files).entries());
   const newFiles = processed.map(([name, val]) => {
     let lines: string[] = [];

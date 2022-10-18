@@ -6,7 +6,7 @@ import {
   getCleanText,
   getNoDupeNoHashUrls,
   getUrls,
-  prepare,
+  readHtmlFiles,
   writeSmlFiles,
 } from "./util.js";
 
@@ -32,7 +32,7 @@ async function getFiles(): Promise<Map<string, string>> {
 }
 
 export async function smlnjLib() {
-  const files = await prepare(libName, getFiles);
+  const files = await readHtmlFiles(libName, getFiles);
   const newFiles = files.map(({ name, text }) => {
     const $ = load(text);
     const lines: string[] = ["(* synopsis *)"];
