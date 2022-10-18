@@ -2,7 +2,7 @@ import { type Cheerio, type Element } from "cheerio";
 import { access, mkdir, readdir, readFile, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
-import { type File } from "./types.js";
+import type { File } from "./types";
 
 export const emitComments = true;
 export const rootOut = "out";
@@ -85,16 +85,21 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
   ac.push(cur.join(" "));
 }
 
-async function writeHtmlFiles(libName: string, files: Map<string, string>) {
-  await mkdir(path.join(rootOut, libName, htmlOut), { recursive: true });
-  const ps = Array.from(files.entries()).map(async ([name, text]) => {
-    const p = path.join(rootOut, libName, htmlOut, name);
-    await writeFile(p, text);
-  });
-  await Promise.all(ps);
-}
-
-async function readHtmlFiles(libName: string): Promise<File[]> {
+export async function getHtmlFilesCached(
+  libName: string,
+  getFiles: () => Promise<Map<string, string>>,
+): Promise<File[]> {
+  try {
+    await access(path.join(rootOut, libName, htmlOut));
+  } catch {
+    const files = await getFiles();
+    await mkdir(path.join(rootOut, libName, htmlOut), { recursive: true });
+    const ps = Array.from(files.entries()).map(async ([name, text]) => {
+      const p = path.join(rootOut, libName, htmlOut, name);
+      await writeFile(p, text);
+    });
+    await Promise.all(ps);
+  }
   const fileNames = await readdir(path.join(rootOut, libName, htmlOut));
   const ps = fileNames.map((name) =>
     readFile(path.join(rootOut, libName, htmlOut, name)).then((text) => ({
@@ -103,17 +108,4 @@ async function readHtmlFiles(libName: string): Promise<File[]> {
     })),
   );
   return Promise.all(ps);
-}
-
-export async function getHtmlFilesCached(
-  libName: string,
-  getFiles: () => Promise<Map<string, string>>,
-) {
-  try {
-    await access(path.join(rootOut, libName, htmlOut));
-  } catch {
-    const map = await getFiles();
-    await writeHtmlFiles(libName, map);
-  }
-  return readHtmlFiles(libName);
 }
