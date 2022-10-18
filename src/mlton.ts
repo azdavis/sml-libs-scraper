@@ -18,7 +18,8 @@ function mltonUrl(x: string): string {
 async function getFiles(): Promise<Map<string, string>> {
   const rootText = await fetchText(mltonUrl("MLtonStructure"));
   const $ = load(rootText);
-  // something wrong with the selector string, need to cast
+  // something wrong with the selector string (because of the _ to start, I
+  // think), need to cast
   const elements = $("#_substructures ~ div a") as any as Cheerio<Element>;
   const urls = getNoDupeNoHashUrls(elements);
   const map = new Map<string, string>();
