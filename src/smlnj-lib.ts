@@ -1,11 +1,11 @@
 import { load } from "cheerio";
 import path from "path";
+import { File } from "./types.js";
 import {
   breakSmlAcrossLines,
   fetchText,
   getCleanText,
   getNoDupeNoHashUrls,
-  getUrls,
   readHtmlFiles,
   writeSmlFiles,
 } from "./util.js";
@@ -13,22 +13,21 @@ import {
 const libName = "smlnj-lib";
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib";
 
-async function getFiles(): Promise<Map<string, string>> {
+async function getFiles(): Promise<File[]> {
   const $ = load(await fetchText(rootUrl));
   const dirUrls = getNoDupeNoHashUrls($("#toc a"));
-  const map = new Map<string, string>();
-  for (const dirUrl of dirUrls) {
+  const ps = Array.from(dirUrls).map(async (dirUrl) => {
     const $ = load(await fetchText(`${rootUrl}/${dirUrl}`));
     const dir = path.dirname(dirUrl);
-    for (const name of getUrls($("dt a"))) {
-      if (name.includes("#")) {
-        continue;
-      }
+    const nameUrls = getNoDupeNoHashUrls($("dt a"));
+    const ps = Array.from(nameUrls).map(async (name) => {
       const text = await fetchText(`${rootUrl}/${dir}/${name}`);
-      map.set(name, text);
-    }
-  }
-  return map;
+      return { name, text };
+    });
+    return Promise.all(ps);
+  });
+  const xs = await Promise.all(ps);
+  return xs.flat();
 }
 
 export async function smlnjLib() {

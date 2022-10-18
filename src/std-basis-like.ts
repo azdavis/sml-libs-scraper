@@ -26,15 +26,14 @@ export interface Args {
   linkSelector: SelectorType;
 }
 
-async function getFiles(args: Args): Promise<Map<string, string>> {
+async function getFiles(args: Args): Promise<File[]> {
   const $ = load(await fetchText(`${args.rootUrl}/${args.index}`));
   const urls = getNoDupeNoHashUrls($(args.linkSelector));
-  const map = new Map<string, string>();
-  for (const name of urls) {
+  const ps = Array.from(urls).map(async (name) => {
     const text = await fetchText(`${args.rootUrl}/${name}`);
-    map.set(name, text);
-  }
-  return map;
+    return { name, text };
+  });
+  return Promise.all(ps);
 }
 
 function processFiles(files: File[]): MergedInfoMap {

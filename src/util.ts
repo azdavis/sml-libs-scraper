@@ -96,14 +96,14 @@ const smlDir = "sml";
  */
 export async function readHtmlFiles(
   libName: string,
-  getFiles: () => Promise<Map<string, string>>,
+  getFiles: () => Promise<File[]>,
 ): Promise<File[]> {
   try {
     await access(path.join(outDir, libName, htmlDir));
   } catch {
     const files = await getFiles();
     await mkdir(path.join(outDir, libName, htmlDir), { recursive: true });
-    const ps = Array.from(files.entries()).map(([name, text]) => {
+    const ps = files.map(({ name, text }) => {
       const p = path.join(outDir, libName, htmlDir, name);
       return writeFile(p, text);
     });
