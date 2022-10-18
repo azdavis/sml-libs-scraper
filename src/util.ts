@@ -1,5 +1,5 @@
 import { type Cheerio, type Element } from "cheerio";
-import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { access, mkdir, readdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { type File } from "./types.js";
 
@@ -40,18 +40,6 @@ export function getUrls(ch: Cheerio<Element>): string[] {
 export async function fetchText(x: string): Promise<string> {
   const res = await fetch(x);
   return res.text();
-}
-
-export async function readHtmlFiles(libName: string): Promise<File[]> {
-  const fileNames = await readdir(path.join(rootOut, libName, htmlOut));
-  return Promise.all(
-    fileNames.map((name) =>
-      readFile(path.join(rootOut, libName, htmlOut, name)).then((text) => ({
-        name,
-        text: text.toString(),
-      })),
-    ),
-  );
 }
 
 export function getCleanText(x: Cheerio<Element>): string {
@@ -96,14 +84,35 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
   ac.push(cur.join(" "));
 }
 
-export async function writeHtmlFiles(
-  libName: string,
-  files: Map<string, string>,
-) {
+async function writeHtmlFiles(libName: string, files: Map<string, string>) {
   await mkdir(path.join(rootOut, libName, htmlOut), { recursive: true });
   const ps = Array.from(files.entries()).map(async ([name, text]) => {
     const p = path.join(rootOut, libName, htmlOut, name);
     await writeFile(p, text);
   });
   await Promise.all(ps);
+}
+
+async function readHtmlFiles(libName: string): Promise<File[]> {
+  const fileNames = await readdir(path.join(rootOut, libName, htmlOut));
+  const ps = fileNames.map((name) =>
+    readFile(path.join(rootOut, libName, htmlOut, name)).then((text) => ({
+      name,
+      text: text.toString(),
+    })),
+  );
+  return Promise.all(ps);
+}
+
+export async function getHtmlFilesCached(
+  libName: string,
+  getFiles: () => Promise<Map<string, string>>,
+) {
+  try {
+    await access(path.join(rootOut, libName, htmlOut));
+  } catch {
+    const map = await getFiles();
+    await writeHtmlFiles(libName, map);
+  }
+  return readHtmlFiles(libName);
 }

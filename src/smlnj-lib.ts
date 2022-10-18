@@ -1,22 +1,20 @@
 import { load } from "cheerio";
-import { access, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import {
   breakSmlAcrossLines,
   fetchText,
   getCleanText,
+  getHtmlFilesCached,
   getUrls,
-  htmlOut,
-  readHtmlFiles,
   rootOut,
   smlOut,
-  writeHtmlFiles,
 } from "./util.js";
 
 const libName = "smlnj-lib";
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
-async function fetchAndWriteFiles() {
+async function getFiles(): Promise<Map<string, string>> {
   const $ = load(await fetchText(rootUrl));
   // rm dupes and ignore hash
   const dirUrls = new Set(
@@ -34,16 +32,11 @@ async function fetchAndWriteFiles() {
       map.set(name, text);
     }
   }
-  await writeHtmlFiles(libName, map);
+  return map;
 }
 
 export async function smlnjLib() {
-  try {
-    await access(path.join(rootOut, libName, htmlOut));
-  } catch {
-    await fetchAndWriteFiles();
-  }
-  const files = await readHtmlFiles(libName);
+  const files = await getHtmlFilesCached(libName, getFiles);
   await mkdir(path.join(rootOut, libName, smlOut), { recursive: true });
   const ps = files.map(async ({ name, text }) => {
     const $ = load(text);

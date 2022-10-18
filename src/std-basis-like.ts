@@ -1,5 +1,5 @@
 import { load, type CheerioAPI, type SelectorType } from "cheerio";
-import { access, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import type {
   File,
@@ -15,13 +15,11 @@ import {
   emitComments,
   fetchText,
   getCleanText,
+  getHtmlFilesCached,
   getUrls,
-  htmlOut,
-  readHtmlFiles,
   rootOut,
   smlOut,
   smlStarter,
-  writeHtmlFiles,
 } from "./util.js";
 
 export interface Args {
@@ -31,7 +29,7 @@ export interface Args {
   linkSelector: SelectorType;
 }
 
-async function fetchAndWriteFiles(args: Args) {
+async function getFiles(args: Args): Promise<Map<string, string>> {
   const $ = load(await fetchText(`${args.rootUrl}/${args.index}`));
   // rm dupes and ignore hash
   const urls = Array.from(
@@ -42,7 +40,7 @@ async function fetchAndWriteFiles(args: Args) {
     const text = await fetchText(`${args.rootUrl}/${name}`);
     map.set(name, text);
   }
-  await writeHtmlFiles(args.libName, map);
+  return map;
 }
 
 function processFiles(files: File[]): MergedInfoMap {
@@ -285,12 +283,7 @@ function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
 }
 
 export async function stdBasisLike(args: Args) {
-  try {
-    await access(path.join(rootOut, args.libName, htmlOut));
-  } catch {
-    await fetchAndWriteFiles(args);
-  }
-  const files = await readHtmlFiles(args.libName);
+  const files = await getHtmlFilesCached(args.libName, () => getFiles(args));
   await mkdir(path.join(rootOut, args.libName, smlOut), { recursive: true });
   const processed = Array.from(processFiles(files).entries());
   const ps = processed.map(async ([name, val]) => {
