@@ -4,6 +4,7 @@ import {
   breakSmlAcrossLines,
   fetchText,
   getCleanText,
+  getNoDupeNoHashUrls,
   getUrls,
   prepare,
   writeSmlFiles,
@@ -14,10 +15,7 @@ const rootUrl = "https://www.smlnj.org/doc/smlnj-lib/";
 
 async function getFiles(): Promise<Map<string, string>> {
   const $ = load(await fetchText(rootUrl));
-  // rm dupes and ignore hash
-  const dirUrls = new Set(
-    getUrls($("#toc a")).map((x) => x.replace(/#.*/, "")),
-  );
+  const dirUrls = getNoDupeNoHashUrls($("#toc a"));
   const map = new Map<string, string>();
   for (const dirUrl of dirUrls) {
     const $ = load(await fetchText(`${rootUrl}/${dirUrl}`));

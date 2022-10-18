@@ -13,7 +13,7 @@ import {
   emitComments,
   fetchText,
   getCleanText,
-  getUrls,
+  getNoDupeNoHashUrls,
   prepare,
   smlStarter,
   writeSmlFiles,
@@ -28,10 +28,7 @@ export interface Args {
 
 async function getFiles(args: Args): Promise<Map<string, string>> {
   const $ = load(await fetchText(`${args.rootUrl}/${args.index}`));
-  // rm dupes and ignore hash
-  const urls = Array.from(
-    new Set(getUrls($(args.linkSelector)).map((x) => x.replace(/#.*/, ""))),
-  );
+  const urls = getNoDupeNoHashUrls($(args.linkSelector));
   const map = new Map<string, string>();
   for (const name of urls) {
     const text = await fetchText(`${args.rootUrl}/${name}`);

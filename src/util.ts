@@ -26,6 +26,15 @@ export function getUrls(ch: Cheerio<Element>): string[] {
   return compact(ch.toArray().map((x) => x.attribs["href"]));
 }
 
+const hash = /#.*/;
+function rmHash(x: string): string {
+  return x.replace(hash, "");
+}
+
+export function getNoDupeNoHashUrls(ch: Cheerio<Element>): Set<string> {
+  return new Set(getUrls(ch).map(rmHash));
+}
+
 export async function fetchText(x: string): Promise<string> {
   const res = await fetch(x);
   return res.text();
