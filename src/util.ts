@@ -1,5 +1,6 @@
 import { type Cheerio, type Element } from "cheerio";
 import { access, mkdir, readdir, readFile, writeFile } from "fs/promises";
+import fetch from "node-fetch";
 import path from "path";
 import { type File } from "./types.js";
 
