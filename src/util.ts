@@ -5,9 +5,9 @@ import path from "path";
 import type { File } from "./types";
 
 export const emitComments = true;
-export const rootOut = "out";
-export const htmlOut = "html";
-export const smlOut = "sml";
+const rootOut = "out";
+const htmlOut = "html";
+const smlOut = "sml";
 
 export function assert(x: boolean) {
   if (!x) {
