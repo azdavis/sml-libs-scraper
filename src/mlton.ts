@@ -1,5 +1,4 @@
 import { load, type Cheerio, type Element } from "cheerio";
-import { File } from "./types.js";
 import {
   breakSmlAcrossLines,
   fetchText,
@@ -39,18 +38,6 @@ export async function mlton() {
     console.log({ name, text, code });
     const lines: string[] = [];
     breakSmlAcrossLines(lines, code);
-    return { name, text: lines.join("\n") };
-  });
-  await writeSmlFiles(libName, newFiles);
-}
-
-async function nah(files: File[]) {
-  const newFiles = files.map(({ name, text }) => {
-    const $ = load(text);
-    const lines: string[] = ["(* synopsis *)"];
-    breakSmlAcrossLines(lines, getCleanText($("#_synopsis").next()));
-    lines.push("(* interface *)");
-    breakSmlAcrossLines(lines, getCleanText($("#_interface").next()));
     return { name, text: lines.join("\n") };
   });
   await writeSmlFiles(libName, newFiles);
