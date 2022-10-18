@@ -293,14 +293,15 @@ export async function stdBasisLike(args: Args) {
     await fetchAndWriteFiles(args);
   }
   const files = await getFilesFromDir(path.join(rootOut, args.dirName));
-  const map = processFiles(files);
   await mkdir(path.join(rootOut, args.dirName, smlOut), { recursive: true });
-  for (const [name, val] of map.entries()) {
+  const map = processFiles(files);
+  const ps = Array.from(map.entries()).map(async ([name, val]) => {
     let lines: string[] = [];
     mkSmlFile(lines, name, val);
     await writeFile(
       path.join(rootOut, args.dirName, smlOut, name + ".sml"),
       lines.join("\n"),
     );
-  }
+  });
+  await Promise.all(ps);
 }
