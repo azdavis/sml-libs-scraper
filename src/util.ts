@@ -30,7 +30,7 @@ function id<T>(x: T): T {
   return x;
 }
 
-export function compact<T>(xs: (T | undefined)[]): T[] {
+function compact<T>(xs: (T | undefined)[]): T[] {
   return filterMap(id, xs);
 }
 
