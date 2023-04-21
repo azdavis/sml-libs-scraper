@@ -194,21 +194,19 @@ function indent(n: number): string {
  */
 export function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   writeComment(lines, "", info.comment);
-  if (info.signatureName === null) {
-    assert(info.defs.length === 0);
-  } else {
-    lines.push(info.signatureName + " = sig");
+  if (info.signature !== null) {
+    lines.push(info.signature.name + " = sig");
     let level = 1;
-    for (const def of info.defs) {
-      if (def.comment !== null) {
-        writeComment(lines, indent(level), [def.comment]);
+    for (const spec of info.signature.specs) {
+      if (spec.comment !== null) {
+        writeComment(lines, indent(level), [spec.comment]);
       }
-      const trimSpec = def.spec.trim();
-      if (trimSpec.endsWith("end")) {
+      const def = spec.def.trim();
+      if (def.endsWith("end")) {
         level -= 1;
       }
-      splitWhereType(lines, indent(level), def.spec);
-      if (trimSpec.endsWith(": sig")) {
+      splitWhereType(lines, indent(level), spec.def);
+      if (def.endsWith(": sig")) {
         level += 1;
       }
     }

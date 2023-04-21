@@ -11,23 +11,27 @@ export interface MultiDef {
 }
 
 export interface Info {
+  comment: string[];
   signatureName: string | null;
   structsAndFunctors: string[];
-  comment: string[];
   specs: string[];
   defs: MultiDef[];
 }
 
 export interface MergedInfo {
-  signatureName: string | null;
-  structsAndFunctors: string[];
   comment: string[];
-  defs: Def[];
+  signature: Signature | null;
+  structsAndFunctors: string[];
   extra: Extra | null;
 }
 
-export interface Def {
-  spec: string;
+export interface Signature {
+  name: string;
+  specs: CommentedSpec[];
+}
+
+export interface CommentedSpec {
+  def: string;
   comment: string | null;
 }
 
@@ -38,6 +42,6 @@ export interface Extra {
 }
 
 export interface Merged {
-  defs: Def[];
+  specs: CommentedSpec[];
   extra: Extra;
 }

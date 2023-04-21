@@ -35,11 +35,16 @@ function processFiles(files: File[]): MergedInfoMap {
     assert(!ret.has(file.name));
     const info = getInfo(file.name, load(file.text));
     const merged = mergeDecsAndDefs(info.specs, info.defs);
+    const hasNoSpecs = merged.specs.length === 0;
+    const hasNoSignature = info.signatureName === null;
+    assert(hasNoSpecs === hasNoSignature);
     ret.set(file.name, {
-      signatureName: info.signatureName,
+      signature:
+        info.signatureName === null
+          ? null
+          : { name: info.signatureName, specs: merged.specs },
       structsAndFunctors: info.structsAndFunctors,
       comment: info.comment,
-      defs: merged.defs,
       extra: merged.extra,
     });
   }
@@ -131,7 +136,7 @@ function getName(s: string): string {
   return name;
 }
 
-function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
+function mergeDecsAndDefs(rawSpecs: string[], multiDefs: MultiDef[]): Merged {
   const map = new Map<string, string>();
   const duplicate = new Map<string, string>();
   const used = new Set<string>();
@@ -160,21 +165,21 @@ function mergeDecsAndDefs(specs: string[], multiDefs: MultiDef[]): Merged {
       }
     }
   }
-  const defs = specs.map((spec) => {
-    const name = getName(spec);
+  const specs = rawSpecs.map((def) => {
+    const name = getName(def);
     const val = map.get(name);
     if (used.has(name)) {
       usedMultiple.add(name);
     }
     used.add(name);
-    return { spec, comment: val === undefined ? null : val };
+    return { def, comment: val === undefined ? null : val };
   });
   for (const k of used.values()) {
     if (used.has(k)) {
       map.delete(k);
     }
   }
-  return { defs, extra: { unused: map, duplicate, usedMultiple } };
+  return { specs, extra: { unused: map, duplicate, usedMultiple } };
 }
 
 export async function stdBasisLike(args: Args) {
