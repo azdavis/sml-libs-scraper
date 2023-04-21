@@ -10,7 +10,7 @@ import {
   writeSmlFiles,
 } from "./util.js";
 
-const libName = "smlnj-lib";
+const libName = "smlnj_lib";
 const rootUrl = "https://www.smlnj.org/doc/smlnj-lib";
 
 async function getFiles(): Promise<File[]> {
