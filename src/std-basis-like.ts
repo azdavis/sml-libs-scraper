@@ -191,15 +191,16 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
   if (!emitComments) {
     return;
   }
+  const lineStart = indent + " *";
   lines.push(indent + "(*!");
   for (let i = 0; i < paragraphs.length; i++) {
-    let cur = indent;
+    let cur = lineStart;
     const paragraph = paragraphs[i];
     for (const word of paragraph.split(" ")) {
-      const toAdd = (cur === indent ? "" : " ") + word;
+      const toAdd = " " + word;
       if (cur.length + toAdd.length > maxLineWidth) {
         lines.push(cur);
-        cur = indent + word;
+        cur = lineStart + toAdd;
       } else {
         cur += toAdd;
       }
@@ -209,7 +210,7 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
       lines.push("");
     }
   }
-  lines.push(indent + "!*)");
+  lines.push(indent + " *)");
 }
 
 const indentStr = "  ";
