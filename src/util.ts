@@ -63,7 +63,11 @@ export const smlStarter = new Set([
 
 const precedesType = new Set(["where", "and", "sharing"]);
 
-export function breakSmlAcrossLines(ac: string[], text: string) {
+/**
+ * breaks `text` which contains the text of sml decs in sequence into one dec per line, and writes
+ * that into `lines`.
+ */
+export function breakSmlAcrossLines(lines: string[], text: string) {
   const tokens = text.split(" ");
   let cur: string[] = [];
   let prev: string | null = null;
@@ -75,7 +79,7 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
         (token !== "type" || prev === null || !precedesType.has(prev)))
     ) {
       if (cur.length !== 0) {
-        ac.push(cur.join(" "));
+        lines.push(cur.join(" "));
       }
       cur = [token];
     } else {
@@ -83,7 +87,7 @@ export function breakSmlAcrossLines(ac: string[], text: string) {
     }
     prev = token;
   }
-  ac.push(cur.join(" "));
+  lines.push(cur.join(" "));
 }
 
 const htmlEnd = /\.html$/;
@@ -131,7 +135,9 @@ export async function writeSmlFiles(libName: string, files: File[]) {
 
 const maxLineWidth = 100;
 
-// mutates lines to add the comment indented with indent.
+/**
+ * writes the comment given by the `paragraphs` into `lines`, indented with `indent`.
+ */
 function writeComment(lines: string[], indent: string, paragraphs: string[]) {
   if (!emitComments) {
     return;
@@ -158,11 +164,14 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
   lines.push(indent + " *)");
 }
 
-const indentStr = "  ";
 const whereType = "where type";
 
-function splitWhereType(lines: string[], indent: string, s: string) {
-  const parts = s.split(whereType);
+/**
+ * writes the `dec` into `lines`, splitting any "where type"s across different lines, indented by
+ * `indent`.
+ */
+function splitWhereType(lines: string[], indent: string, dec: string) {
+  const parts = dec.split(whereType);
   const fst = parts.shift();
   if (fst === undefined) {
     throw new Error(`splitting on ${whereType} yielded []`);
@@ -174,10 +183,15 @@ function splitWhereType(lines: string[], indent: string, s: string) {
   }
 }
 
+const indentStr = "  ";
+
 function indent(n: number): string {
   return Array(n).fill(indentStr).join("");
 }
 
+/**
+ * makes an sml file and writes it into the `lines` from the `info`. `name` is for debug only.
+ */
 export function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   writeComment(lines, "", info.comment);
   if (info.signatureName === null) {
