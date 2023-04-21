@@ -1,8 +1,8 @@
 import { type Cheerio, type Element } from "cheerio";
-import { access, mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { access, mkdir, readFile, readdir, writeFile } from "fs/promises";
 import fetch from "node-fetch";
 import path from "path";
-import type { File } from "./types";
+import type { File, MergedInfo } from "./types";
 
 export const emitComments = true;
 
@@ -127,4 +127,95 @@ export async function writeSmlFiles(libName: string, files: File[]) {
     return writeFile(p, text);
   });
   await Promise.all(ps);
+}
+
+const maxLineWidth = 100;
+
+// mutates lines to add the comment indented with indent.
+function writeComment(lines: string[], indent: string, paragraphs: string[]) {
+  if (!emitComments) {
+    return;
+  }
+  const lineStart = indent + " *";
+  lines.push(indent + "(*!");
+  for (let i = 0; i < paragraphs.length; i++) {
+    let cur = lineStart;
+    const paragraph = paragraphs[i];
+    for (const word of paragraph.split(" ")) {
+      const toAdd = " " + word;
+      if (cur.length + toAdd.length > maxLineWidth) {
+        lines.push(cur);
+        cur = lineStart + toAdd;
+      } else {
+        cur += toAdd;
+      }
+    }
+    lines.push(cur);
+    if (i + 1 !== paragraphs.length) {
+      lines.push("");
+    }
+  }
+  lines.push(indent + " *)");
+}
+
+const indentStr = "  ";
+const whereType = "where type";
+
+function splitWhereType(lines: string[], indent: string, s: string) {
+  const parts = s.split(whereType);
+  const fst = parts.shift();
+  if (fst === undefined) {
+    throw new Error(`splitting on ${whereType} yielded []`);
+  }
+  const fstTrim = fst.trim();
+  lines.push(indent + fstTrim);
+  for (const wt of parts) {
+    lines.push(indent + indentStr + whereType + " " + wt.trim());
+  }
+}
+
+function indent(n: number): string {
+  return Array(n).fill(indentStr).join("");
+}
+
+export function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
+  writeComment(lines, "", info.comment);
+  if (info.signatureName === null) {
+    if (info.defs.length !== 0) {
+      console.warn(`${name}: no signature name but yes defs`);
+    }
+  } else {
+    lines.push(info.signatureName + " = sig");
+    let level = 1;
+    for (const def of info.defs) {
+      if (def.comment !== null) {
+        writeComment(lines, indent(level), [def.comment]);
+      }
+      const trimSpec = def.spec.trim();
+      if (trimSpec.endsWith("end")) {
+        level -= 1;
+      }
+      splitWhereType(lines, indent(level), def.spec);
+      if (trimSpec.endsWith(": sig")) {
+        level += 1;
+      }
+    }
+    lines.push("end");
+  }
+  lines.push("");
+  for (const other of info.otherNames) {
+    splitWhereType(lines, "", other + " = struct end");
+  }
+  if (info.otherNames.length !== 0) {
+    lines.push("");
+  }
+  if (info.extra.unused.size !== 0) {
+    console.warn(`${name}: unused:`, info.extra.unused);
+  }
+  if (info.extra.duplicate.size !== 0) {
+    console.warn(`${name}: duplicate:`, info.extra.duplicate);
+  }
+  if (info.extra.usedMultiple.size !== 0) {
+    console.warn(`${name}: used multiple times:`, info.extra.usedMultiple);
+  }
 }
