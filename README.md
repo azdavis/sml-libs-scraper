@@ -10,6 +10,6 @@ Parsing the online
 library documentation and generating various things from them, like SML files.
 
 [basis]: https://smlfamily.github.io/Basis
-[smlnj-lib]: https://www.smlnj.org/doc/SMLofNJ/pages/index-all.html
+[smlnj-lib]: https://www.smlnj.org/doc/smlnj-lib
 [sml-of-nj]: https://www.smlnj.org/doc/SMLofNJ/pages/index-all.html
 [mlton]: http://mlton.org/MLtonStructure
