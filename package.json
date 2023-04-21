@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "sml-basis",
+  "name": "sml-libs-scraper",
   "version": "0.1.0",
   "type": "module",
   "main": "out/main.js",
