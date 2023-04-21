@@ -118,7 +118,8 @@ function getInfo(name: string, $: CheerioAPI): Info {
           items.push(t);
         }
       } else if (child.is("dd")) {
-        defs.push({ items, comment: getCleanText(child) });
+        const t = getCleanText(child);
+        defs.push({ items, comment: t.length === 0 ? null : t });
         items = [];
       } else {
         console.warn(`${name}: non-dt non-dd child in description, ignoring`);
@@ -153,15 +154,20 @@ function mergeDecsAndDefs(rawSpecs: string[], multiDefs: MultiDef[]): Merged {
       duplicate.set(fstName, existingEntry);
     }
     if (def.items.length === 1) {
-      let comment: string;
+      let comment: string | null;
       if (smlStarter.has(fst.split(" ")[0])) {
         comment = def.comment;
       } else {
-        comment = def.items[0] + " " + def.comment;
+        comment =
+          def.items[0] + (def.comment === null ? "" : " " + def.comment);
       }
-      map.set(fstName, comment);
+      if (comment !== null) {
+        map.set(fstName, comment);
+      }
     } else {
-      map.set(fstName, def.comment);
+      if (def.comment !== null) {
+        map.set(fstName, def.comment);
+      }
       for (let i = 1; i < def.items.length; i++) {
         const name = getName(def.items[i]);
         map.set(name, `See ${fstName}.`);

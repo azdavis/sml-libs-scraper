@@ -7,7 +7,7 @@ export type MergedInfoMap = Map<string, MergedInfo>;
 
 export interface MultiDef {
   items: string[];
-  comment: string;
+  comment: string | null;
 }
 
 export interface Info {
