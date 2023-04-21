@@ -78,7 +78,10 @@ function getInfo(name: string, $: CheerioAPI): Info {
       cur = cur.next();
       assert(cur.length === 1);
       if (cur.is("p")) {
-        comment.push(getCleanText(cur));
+        const cleaned = getCleanText(cur);
+        if (cleaned.length !== 0) {
+          comment.push(cleaned);
+        }
       } else if (cur.is("hr")) {
         break;
       } else {
