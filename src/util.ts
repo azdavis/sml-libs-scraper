@@ -195,9 +195,7 @@ function indent(n: number): string {
 export function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
   writeComment(lines, "", info.comment);
   if (info.signatureName === null) {
-    if (info.defs.length !== 0) {
-      console.warn(`${name}: no signature name but yes defs`);
-    }
+    assert(info.defs.length === 0);
   } else {
     lines.push(info.signatureName + " = sig");
     let level = 1;
