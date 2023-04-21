@@ -158,7 +158,7 @@ function writeComment(lines: string[], indent: string, paragraphs: string[]) {
     }
     lines.push(cur);
     if (i + 1 !== paragraphs.length) {
-      lines.push("");
+      lines.push(lineStart);
     }
   }
   lines.push(indent + " *)");
