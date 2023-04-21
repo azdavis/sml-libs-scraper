@@ -1,11 +1,12 @@
 import { load } from "cheerio";
 import path from "path";
-import type { File } from "./types.js";
+import type { File, Signature } from "./types.js";
 import {
   breakSmlAcrossLines,
   fetchText,
   getCleanText,
   getNoDupeNoHashUrls,
+  mkSmlFile,
   readHtmlFiles,
   writeSmlFiles,
 } from "./util.js";
@@ -30,14 +31,34 @@ async function getFiles(): Promise<File[]> {
   return xs.flat();
 }
 
+const sigRe = /^signature /;
 export async function smlnjLib() {
   const files = await readHtmlFiles(libName, getFiles);
   const newFiles = files.map(({ name, text }) => {
     const $ = load(text);
-    const lines: string[] = ["(* synopsis *)"];
-    breakSmlAcrossLines(lines, getCleanText($("#_synopsis").next()));
-    lines.push("(* interface *)");
-    breakSmlAcrossLines(lines, getCleanText($("#_interface").next()));
+    const synopsis: string[] = [];
+    breakSmlAcrossLines(synopsis, getCleanText($("#_synopsis").next()));
+    const signatures = synopsis.filter((x) => x.match(sigRe));
+    const interFace: string[] = [];
+    breakSmlAcrossLines(interFace, getCleanText($("#_interface").next()));
+    let signature: Signature | null = null;
+    const lines: string[] = [];
+    if (signatures.length === 1) {
+      signature = {
+        name: signatures[0].replace(sigRe, ""),
+        specs: interFace.map((def) => ({ def, comment: null })),
+      };
+    } else {
+      lines.push(...signatures);
+    }
+    const structure = synopsis.filter((x) => x.match(/^structure /));
+    const functor = synopsis.filter((x) => x.match(/^functor /));
+    mkSmlFile(lines, name, {
+      signature,
+      structsAndFunctors: structure.concat(functor),
+      comment: [],
+      extra: null,
+    });
     return { name, text: lines.join("\n") };
   });
   await writeSmlFiles(libName, newFiles);
