@@ -12,7 +12,7 @@ export interface MultiDef {
 
 export interface Info {
   signatureName: string | null;
-  otherNames: string[];
+  structsAndFunctors: string[];
   comment: string[];
   specs: string[];
   defs: MultiDef[];
@@ -20,10 +20,10 @@ export interface Info {
 
 export interface MergedInfo {
   signatureName: string | null;
-  otherNames: string[];
+  structsAndFunctors: string[];
   comment: string[];
   defs: Def[];
-  extra: Extra;
+  extra: Extra | null;
 }
 
 export interface Def {

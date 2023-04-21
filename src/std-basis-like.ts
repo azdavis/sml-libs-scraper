@@ -37,7 +37,7 @@ function processFiles(files: File[]): MergedInfoMap {
     const merged = mergeDecsAndDefs(info.specs, info.defs);
     ret.set(file.name, {
       signatureName: info.signatureName,
-      otherNames: info.otherNames,
+      structsAndFunctors: info.structsAndFunctors,
       comment: info.comment,
       defs: merged.defs,
       extra: merged.extra,
@@ -51,7 +51,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
   const synopsisHeader = headers.find((x) => getCleanText($(x)) == "Synopsis");
   const comment: string[] = [];
   let signatureName: string | null = null;
-  let otherNames: string[] = [];
+  let structsAndFunctors: string[] = [];
   if (synopsisHeader === undefined) {
     console.warn(`${name}: missing synopsis`);
   } else {
@@ -68,7 +68,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
     } else {
       console.warn(`${name}: missing signature in synopsis`);
     }
-    otherNames = synopsis;
+    structsAndFunctors = synopsis;
     for (;;) {
       cur = cur.next();
       assert(cur.length === 1);
@@ -118,7 +118,7 @@ function getInfo(name: string, $: CheerioAPI): Info {
     }
     assert(items.length === 0);
   }
-  return { signatureName, otherNames, comment, specs, defs };
+  return { signatureName, structsAndFunctors, comment, specs, defs };
 }
 
 function getName(s: string): string {

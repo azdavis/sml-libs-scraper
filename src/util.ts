@@ -139,7 +139,7 @@ const maxLineWidth = 100;
  * writes the comment given by the `paragraphs` into `lines`, indented with `indent`.
  */
 function writeComment(lines: string[], indent: string, paragraphs: string[]) {
-  if (!emitComments) {
+  if (!emitComments || paragraphs.length === 0) {
     return;
   }
   const lineStart = indent + " *";
@@ -217,19 +217,22 @@ export function mkSmlFile(lines: string[], name: string, info: MergedInfo) {
     lines.push("end");
   }
   lines.push("");
-  for (const other of info.otherNames) {
+  for (const other of info.structsAndFunctors) {
     splitWhereType(lines, "", other + " = struct end");
   }
-  if (info.otherNames.length !== 0) {
+  if (info.structsAndFunctors.length !== 0) {
     lines.push("");
   }
-  if (info.extra.unused.size !== 0) {
-    console.warn(`${name}: unused:`, info.extra.unused);
-  }
-  if (info.extra.duplicate.size !== 0) {
-    console.warn(`${name}: duplicate:`, info.extra.duplicate);
-  }
-  if (info.extra.usedMultiple.size !== 0) {
-    console.warn(`${name}: used multiple times:`, info.extra.usedMultiple);
+  const extra = info.extra;
+  if (extra !== null) {
+    if (extra.unused.size !== 0) {
+      console.warn(`${name}: unused:`, extra.unused);
+    }
+    if (extra.duplicate.size !== 0) {
+      console.warn(`${name}: duplicate:`, extra.duplicate);
+    }
+    if (extra.usedMultiple.size !== 0) {
+      console.warn(`${name}: used multiple times:`, extra.usedMultiple);
+    }
   }
 }
