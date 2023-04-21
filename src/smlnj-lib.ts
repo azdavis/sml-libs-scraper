@@ -45,7 +45,7 @@ export async function smlnjLib() {
     const lines: string[] = [];
     if (signatures.length === 1) {
       signature = {
-        name: signatures[0].replace(sigRe, ""),
+        name: signatures[0],
         specs: interFace.map((def) => ({ def, comment: null })),
       };
     } else {
