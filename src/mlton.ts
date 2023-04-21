@@ -1,5 +1,5 @@
 import { load, type Cheerio, type Element } from "cheerio";
-import { File } from "./types.js";
+import type { File } from "./types.js";
 import {
   breakSmlAcrossLines,
   fetchText,

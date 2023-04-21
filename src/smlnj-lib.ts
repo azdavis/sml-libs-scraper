@@ -1,6 +1,6 @@
 import { load } from "cheerio";
 import path from "path";
-import { File } from "./types.js";
+import type { File } from "./types.js";
 import {
   breakSmlAcrossLines,
   fetchText,
